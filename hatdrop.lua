@@ -1,28 +1,21 @@
-function Align(Part1,Part0,cf,isflingpart) 
-    local up = isflingpart
-    local baseVelocity = Vector3.new(20,20,20)
-    local currentVelocity = baseVelocity
-    
-    local con;con=ps:Connect(functionlocal ps = game:GetService("RunService").PostSimulation
+-- NEW HATDROP METHOD BY ShownApe#7272
+-- Modified for Sky VR compatibility
+
+local ps = game:GetService("RunService").PostSimulation
 local input = game:GetService("UserInputService")
 local Player = game.Players.LocalPlayer
 local options = getgenv().options
 
 local function createpart(size, name,h)
 	local Part = Instance.new("Part")
-	if h and options and options.outlinesEnabled then 
+	if h and options.outlinesEnabled then 
 		local SelectionBox = Instance.new("SelectionBox")
 		SelectionBox.Adornee = Part
 		SelectionBox.LineThickness = 0.05
 		SelectionBox.Parent = Part
 	end
 	Part.Parent = workspace
-	local char = game.Players.LocalPlayer.Character
-	if char and char:FindFirstChild("HumanoidRootPart") then
-		Part.CFrame = char.HumanoidRootPart.CFrame
-	else
-		Part.CFrame = CFrame.new(0,0,0)
-	end
+	Part.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
 	Part.Size = size
 	Part.Transparency = 1
 	Part.CanCollide = false
@@ -66,8 +59,8 @@ function findMeshID(id)
     end
     if getgenv().right=="meshid:"..id then return true,"right" end
     if getgenv().left=="meshid:"..id then return true,"left" end
-    if options and options.leftToy and options.leftToy=="meshid:"..id then return true,"leftToy" end
-    if options and options.rightToy and options.rightToy=="meshid:"..id then return true,"rightToy" end
+    if options.leftToy=="meshid:"..id then return true,"leftToy" end
+    if options.rightToy=="meshid:"..id then return true,"rightToy" end
     return false
 end
 
@@ -77,8 +70,8 @@ function findHatName(id)
     end
     if getgenv().right==id then return true,"right" end
     if getgenv().left==id then return true,"left" end
-    if options and options.leftToy and options.leftToy==id then return true,"leftToy" end
-    if options and options.rightToy and options.rightToy==id then return true,"rightToy" end
+    if options.leftToy==id then return true,"leftToy" end
+    if options.rightToy==id then return true,"rightToy" end
     return false
 end
 
@@ -91,46 +84,47 @@ function Align(Part1,Part0,cf,isflingpart)
         if not _isnetworkowner(Part1) then return end
         Part1.CanCollide=false
         Part1.CFrame=Part0.CFrame*cf
-        Part1.Velocity = velocity
+        Part1.Velocity = velocity or Vector3.new(20,20,20)
     end)
 
     return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
 end
 
-    return {
-        SetVelocity = function(self,v) end,
-        SetCFrame = function(self,v) cf = v end,
-    }
-end
-
+-- NEW HATDROP METHOD - DROP ALL ACCESSORIES IN R6 AND R15 BY ShownApe#7272
 function NewHatdropCallback(Character, callback)
-    local block = false
+    local block = false -- Set to true if you want to remove meshes
     local character = Character
     
+    -- Store original character reference and reset it
     game.Players.LocalPlayer.Character = nil
     game.Players.LocalPlayer.Character = character
     wait(game.Players.RespawnTime + 0.05)
     
+    -- Disable death state
     if character:FindFirstChildOfClass("Humanoid") then
         character:FindFirstChildOfClass("Humanoid"):SetStateEnabled(Enum.HumanoidStateType.Dead,false)
     end
     
+    -- Remove torso parts (R6 and R15 compatibility)
     for i, v in pairs(character:GetChildren()) do
         if v.Name == "Torso" or v.Name == "UpperTorso" then
             v:Destroy()
         end
     end
     
+    -- Remove HumanoidRootPart
     if character:FindFirstChild("HumanoidRootPart") then
         character.HumanoidRootPart:Destroy()
     end
     
+    -- Set accessory backend states
     for i,v in pairs(character:GetChildren()) do
         if v:IsA("Accessory") then
-            sethiddenproperty(v,"BackendAccoutrementState", 0)
+            sethiddenproperty(v,"BackendAccoutrementState", 0) -- 0-3 works, 4 is default in-character state
         end
     end
     
+    -- Optional: Remove meshes if block is true
     if block == true then 
         for i,v in pairs(character:GetDescendants()) do
             if v:IsA("SpecialMesh") then
@@ -139,18 +133,22 @@ function NewHatdropCallback(Character, callback)
         end
     end
     
+    -- Remove all other body parts except Head
     for i,v in pairs(character:GetChildren()) do
         if v:IsA("BasePart") and v.Name ~= "Head" then
-            v:Destroy()
+            v:Destroy() -- This triggers ChildRemoving event
         end
     end
     
+    -- Optional: Remove head (can be removed if needed)
     if character:FindFirstChild("Head") then
         character.Head:remove()
     end
     
+    -- Wait a bit for everything to process
     wait(0.1)
     
+    -- Get all remaining accessories and prepare them for alignment
     local foundmeshids = {}
     local allhats = {}
     
@@ -181,7 +179,7 @@ end
 
 local cam = workspace.CurrentCamera
 cam.CameraType = "Scriptable"
-cam.HeadScale = (options and options.headscale) or 1
+cam.HeadScale = options.headscale
 
 game:GetService("StarterGui"):SetCore("VREnableControllerModels", false)
 
@@ -189,18 +187,16 @@ local rightarmalign = nil
 
 getgenv().con5 = input.UserCFrameChanged:connect(function(part,move)
     cam.CameraType = "Scriptable"
-	cam.HeadScale = (options and options.headscale) or 1
+	cam.HeadScale = options.headscale
     if part == Enum.UserCFrame.Head then
         headpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move)
     elseif part == Enum.UserCFrame.LeftHand then
-        local leftOffset = (options and options.lefthandrotoffset) or Vector3.new(0,0,0)
-        lefthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(leftOffset.X),math.rad(leftOffset.Y),math.rad(leftOffset.Z)))
+        lefthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(options.lefthandrotoffset.X),math.rad(options.lefthandrotoffset.Y),math.rad(options.lefthandrotoffset.Z)))
         if lefttoyenable then
             lefttoypart.CFrame = lefthandpart.CFrame * ltoypos
         end
     elseif part == Enum.UserCFrame.RightHand then
-        local rightOffset = (options and options.righthandrotoffset) or Vector3.new(0,0,0)
-        righthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(rightOffset.X),math.rad(rightOffset.Y),math.rad(rightOffset.Z)))
+        righthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(options.righthandrotoffset.X),math.rad(options.righthandrotoffset.Y),math.rad(options.righthandrotoffset.Z)))
         if righttoyenable then
             righttoypart.CFrame = righthandpart.CFrame * rtoypos
         end
@@ -208,20 +204,20 @@ getgenv().con5 = input.UserCFrameChanged:connect(function(part,move)
 end)
 
 getgenv().con4 = input.InputBegan:connect(function(key)
-	if options and options.thirdPersonButtonToggle and key.KeyCode == options.thirdPersonButtonToggle then
+	if key.KeyCode == options.thirdPersonButtonToggle then
 		thirdperson = not thirdperson
 	end
 	if key.KeyCode == Enum.KeyCode.ButtonR1 then
 		R1down = true
 	end
-    if options and options.leftToyBind and key.KeyCode == options.leftToyBind then
+    if key.KeyCode == options.leftToyBind then
 		if not lfirst then
 			ltoypos = lefttoypart.CFrame:ToObjectSpace(lefthandpart.CFrame):Inverse()
 		end
 		lfirst = false
         lefttoyenable = not lefttoyenable
     end
-	if options and options.rightToyBind and key.KeyCode == options.rightToyBind then
+	if key.KeyCode == options.rightToyBind then
 		if not rfirst then
 			rtoypos = righttoypart.CFrame:ToObjectSpace(righthandpart.CFrame):Inverse()
 		end
@@ -244,31 +240,25 @@ end)
 
 local negitive = true
 getgenv().con2 = game:GetService("RunService").RenderStepped:connect(function()
-	if R1down and options then
-		local rightOffset = options.righthandrotoffset or Vector3.new(0,0,0)
-		local controllerOffset = options.controllerRotationOffset or Vector3.new(0,0,0)
-		cam.CFrame = cam.CFrame:Lerp(cam.CoordinateFrame + (righthandpart.CFrame * CFrame.Angles(math.rad(rightOffset.X),math.rad(rightOffset.Y),math.rad(rightOffset.Z)):Inverse() * CFrame.Angles(math.rad(controllerOffset.X),math.rad(controllerOffset.Y),math.rad(controllerOffset.Z))).LookVector * cam.HeadScale/2, 0.5)
+	if R1down then
+		cam.CFrame = cam.CFrame:Lerp(cam.CoordinateFrame + (righthandpart.CFrame * CFrame.Angles(math.rad(options.righthandrotoffset.X),math.rad(options.righthandrotoffset.Y),math.rad(options.righthandrotoffset.Z)):Inverse() * CFrame.Angles(math.rad(options.controllerRotationOffset.X),math.rad(options.controllerRotationOffset.Y),math.rad(options.controllerRotationOffset.Z))).LookVector * cam.HeadScale/2, 0.5)
 	end
     if R2down and rightarmalign then
         negitive=not negitive
         rightarmalign:SetVelocity(Vector3.new(0,0,-99999999))
-        local rightOffset = (options and options.righthandrotoffset) or Vector3.new(0,0,0)
-        rightarmalign:SetCFrame(CFrame.Angles(math.rad(rightOffset.X),math.rad(rightOffset.Y),math.rad(rightOffset.Z)):Inverse()*CFrame.new(0,0,8*(negitive and -1 or 1)))
+        rightarmalign:SetCFrame(CFrame.Angles(math.rad(options.righthandrotoffset.X),math.rad(options.righthandrotoffset.Y),math.rad(options.righthandrotoffset.Z)):Inverse()*CFrame.new(0,0,8*(negitive and -1 or 1)))
     elseif rightarmalign then
-        rightarmalign:SetVelocity(Vector3.new(0.1,0.1,0.1))
+        rightarmalign:SetVelocity(Vector3.new(20,20,20))
         rightarmalign:SetCFrame(CFrame.new(0,0,0))
     end
 end)
 
+-- Execute the new hatdrop method on current character
 NewHatdropCallback(Player.Character, function(allhats)
     for i,v in pairs(allhats) do
         if not v[1]:FindFirstChild("Handle") then continue end
         if v[2]=="headhats" then 
-            local transparency = 1
-            if options and options.HeadHatTransparency then
-                transparency = options.HeadHatTransparency
-            end
-            v[1].Handle.Transparency = transparency
+            v[1].Handle.Transparency = options.HeadHatTransparency or 1 
         end
 
         local align = Align(v[1].Handle,parts[v[2]],((v[2]=="headhats")and getgenv()[v[2]][(v[3])]) or CFrame.identity)
@@ -278,17 +268,14 @@ NewHatdropCallback(Player.Character, function(allhats)
     end
 end)
 
+-- Handle character respawning
 getgenv().conn = Player.CharacterAdded:Connect(function(Character)
-    wait(0.5)
+    wait(0.5) -- Wait for character to fully load
     NewHatdropCallback(Character, function(allhats)
         for i,v in pairs(allhats) do
             if not v[1]:FindFirstChild("Handle") then continue end
             if v[2]=="headhats" then 
-                local transparency = 1
-                if options and options.HeadHatTransparency then
-                    transparency = options.HeadHatTransparency
-                end
-                v[1].Handle.Transparency = transparency
+                v[1].Handle.Transparency = options.HeadHatTransparency or 1 
             end
 
             local align = Align(v[1].Handle,parts[v[2]],((v[2]=="headhats")and getgenv()[v[2]][(v[3])]) or CFrame.identity)
