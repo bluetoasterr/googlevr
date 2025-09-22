@@ -8,14 +8,19 @@ local options = getgenv().options
 
 local function createpart(size, name,h)
 	local Part = Instance.new("Part")
-	if h and options.outlinesEnabled then 
+	if h and options and options.outlinesEnabled then 
 		local SelectionBox = Instance.new("SelectionBox")
 		SelectionBox.Adornee = Part
 		SelectionBox.LineThickness = 0.05
 		SelectionBox.Parent = Part
 	end
 	Part.Parent = workspace
-	Part.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+	local char = game.Players.LocalPlayer.Character
+	if char and char:FindFirstChild("HumanoidRootPart") then
+		Part.CFrame = char.HumanoidRootPart.CFrame
+	else
+		Part.CFrame = CFrame.new(0,0,0)
+	end
 	Part.Size = size
 	Part.Transparency = 1
 	Part.CanCollide = false
@@ -24,8 +29,8 @@ local function createpart(size, name,h)
 	return Part
 end
 
-local lefthandpart = createpart(Vector3.new(2,1,1), "moveRH",true)
-local righthandpart = createpart(Vector3.new(2,1,1), "moveRH",true)
+local lefthandpart = createpart(Vector3.new(0.1,0.1,0.1), "moveRH",true)
+local righthandpart = createpart(Vector3.new(0.1,0.1,0.1), "moveRH",true)
 local headpart = createpart(Vector3.new(1,1,1), "moveH",false)
 local lefttoypart = createpart(Vector3.new(1,1,1), "LToy",true)
 local righttoypart =  createpart(Vector3.new(1,1,1), "RToy",true)
@@ -77,7 +82,43 @@ end
 
 function Align(Part1,Part0,cf,isflingpart) 
     local up = isflingpart
-    local velocity = Vector3.new(0.1,0.1,0.1)
+    
+    local attach0 = Instance.new("Attachment")
+    attach0.Parent = Part1
+    
+    local attach1 = Instance.new("Attachment")
+    attach1.Parent = Part0
+    attach1.CFrame = cf
+    
+    local alignPos = Instance.new("AlignPosition")
+    alignPos.Attachment0 = attach0
+    alignPos.Attachment1 = attach1
+    alignPos.MaxForce = 9999999
+    alignPos.MaxVelocity = math.huge
+    alignPos.Responsiveness = 200
+    alignPos.Parent = Part1
+    
+    local alignOri = Instance.new("AlignOrientation")
+    alignOri.Attachment0 = attach0
+    alignOri.Attachment1 = attach1
+    alignOri.MaxTorque = 9999999
+    alignOri.MaxAngularVelocity = math.huge
+    alignOri.Responsiveness = 200
+    alignOri.Parent = Part1
+    
+    local con;con=ps:Connect(function()
+        if not Part1:IsDescendantOf(workspace) then 
+            con:Disconnect() 
+            return 
+        end
+        Part1.CanCollide=false
+    end)
+
+    return {
+        SetVelocity = function(self,v) end,
+        SetCFrame = function(self,v) attach1.CFrame = v end,
+    }
+end.1,0.1,0.1)
     local con;con=ps:Connect(function()
         if up~=nil then up=not up end
         if not Part1:IsDescendantOf(workspace) then con:Disconnect() return end
@@ -179,7 +220,7 @@ end
 
 local cam = workspace.CurrentCamera
 cam.CameraType = "Scriptable"
-cam.HeadScale = options.headscale
+cam.HeadScale = (options and options.headscale) or 1
 
 game:GetService("StarterGui"):SetCore("VREnableControllerModels", false)
 
@@ -187,7 +228,7 @@ local rightarmalign = nil
 
 getgenv().con5 = input.UserCFrameChanged:connect(function(part,move)
     cam.CameraType = "Scriptable"
-	cam.HeadScale = options.headscale
+	cam.HeadScale = (options and options.headscale) or 1
     if part == Enum.UserCFrame.Head then
         headpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move)
     elseif part == Enum.UserCFrame.LeftHand then
@@ -248,7 +289,7 @@ getgenv().con2 = game:GetService("RunService").RenderStepped:connect(function()
         rightarmalign:SetVelocity(Vector3.new(0,0,-99999999))
         rightarmalign:SetCFrame(CFrame.Angles(math.rad(options.righthandrotoffset.X),math.rad(options.righthandrotoffset.Y),math.rad(options.righthandrotoffset.Z)):Inverse()*CFrame.new(0,0,8*(negitive and -1 or 1)))
     elseif rightarmalign then
-        rightarmalign:SetVelocity(Vector3.new(0.1,0.1,0.1))
+        rightarmalign:SetVelocity(Vector3.new(1,1,1))
         rightarmalign:SetCFrame(CFrame.new(0,0,0))
     end
 end)
