@@ -1,6 +1,3 @@
--- NEW HATDROP METHOD BY ShownApe#7272
--- Modified for Sky VR compatibility
-
 local ps = game:GetService("RunService").PostSimulation
 local input = game:GetService("UserInputService")
 local Player = game.Players.LocalPlayer
@@ -8,19 +5,14 @@ local options = getgenv().options
 
 local function createpart(size, name,h)
 	local Part = Instance.new("Part")
-	if h and options and options.outlinesEnabled then 
+	if h and options.outlinesEnabled then 
 		local SelectionBox = Instance.new("SelectionBox")
 		SelectionBox.Adornee = Part
 		SelectionBox.LineThickness = 0.05
 		SelectionBox.Parent = Part
 	end
 	Part.Parent = workspace
-	local char = game.Players.LocalPlayer.Character
-	if char and char:FindFirstChild("HumanoidRootPart") then
-		Part.CFrame = char.HumanoidRootPart.CFrame
-	else
-		Part.CFrame = CFrame.new(0,0,0)
-	end
+	Part.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
 	Part.Size = size
 	Part.Transparency = 1
 	Part.CanCollide = false
@@ -29,8 +21,8 @@ local function createpart(size, name,h)
 	return Part
 end
 
-local lefthandpart = createpart(Vector3.new(0.1,0.1,0.1), "moveRH",true)
-local righthandpart = createpart(Vector3.new(0.1,0.1,0.1), "moveRH",true)
+local lefthandpart = createpart(Vector3.new(2,1,1), "moveRH",true)
+local righthandpart = createpart(Vector3.new(2,1,1), "moveRH",true)
 local headpart = createpart(Vector3.new(1,1,1), "moveH",false)
 local lefttoypart = createpart(Vector3.new(1,1,1), "LToy",true)
 local righttoypart =  createpart(Vector3.new(1,1,1), "RToy",true)
@@ -118,54 +110,36 @@ function Align(Part1,Part0,cf,isflingpart)
         SetVelocity = function(self,v) end,
         SetCFrame = function(self,v) attach1.CFrame = v end,
     }
-end.1,0.1,0.1)
-    local con;con=ps:Connect(function()
-        if up~=nil then up=not up end
-        if not Part1:IsDescendantOf(workspace) then con:Disconnect() return end
-        if not _isnetworkowner(Part1) then return end
-        Part1.CanCollide=false
-        Part1.CFrame=Part0.CFrame*cf
-        Part1.Velocity = velocity
-    end)
-
-    return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
 end
 
--- NEW HATDROP METHOD - DROP ALL ACCESSORIES IN R6 AND R15 BY ShownApe#7272
 function NewHatdropCallback(Character, callback)
-    local block = false -- Set to true if you want to remove meshes
+    local block = false
     local character = Character
     
-    -- Store original character reference and reset it
     game.Players.LocalPlayer.Character = nil
     game.Players.LocalPlayer.Character = character
     wait(game.Players.RespawnTime + 0.05)
     
-    -- Disable death state
     if character:FindFirstChildOfClass("Humanoid") then
         character:FindFirstChildOfClass("Humanoid"):SetStateEnabled(Enum.HumanoidStateType.Dead,false)
     end
     
-    -- Remove torso parts (R6 and R15 compatibility)
     for i, v in pairs(character:GetChildren()) do
         if v.Name == "Torso" or v.Name == "UpperTorso" then
             v:Destroy()
         end
     end
     
-    -- Remove HumanoidRootPart
     if character:FindFirstChild("HumanoidRootPart") then
         character.HumanoidRootPart:Destroy()
     end
     
-    -- Set accessory backend states
     for i,v in pairs(character:GetChildren()) do
         if v:IsA("Accessory") then
-            sethiddenproperty(v,"BackendAccoutrementState", 0) -- 0-3 works, 4 is default in-character state
+            sethiddenproperty(v,"BackendAccoutrementState", 0)
         end
     end
     
-    -- Optional: Remove meshes if block is true
     if block == true then 
         for i,v in pairs(character:GetDescendants()) do
             if v:IsA("SpecialMesh") then
@@ -174,22 +148,18 @@ function NewHatdropCallback(Character, callback)
         end
     end
     
-    -- Remove all other body parts except Head
     for i,v in pairs(character:GetChildren()) do
         if v:IsA("BasePart") and v.Name ~= "Head" then
-            v:Destroy() -- This triggers ChildRemoving event
+            v:Destroy()
         end
     end
     
-    -- Optional: Remove head (can be removed if needed)
     if character:FindFirstChild("Head") then
         character.Head:remove()
     end
     
-    -- Wait a bit for everything to process
     wait(0.1)
     
-    -- Get all remaining accessories and prepare them for alignment
     local foundmeshids = {}
     local allhats = {}
     
@@ -220,7 +190,7 @@ end
 
 local cam = workspace.CurrentCamera
 cam.CameraType = "Scriptable"
-cam.HeadScale = (options and options.headscale) or 1
+cam.HeadScale = options.headscale
 
 game:GetService("StarterGui"):SetCore("VREnableControllerModels", false)
 
@@ -228,7 +198,7 @@ local rightarmalign = nil
 
 getgenv().con5 = input.UserCFrameChanged:connect(function(part,move)
     cam.CameraType = "Scriptable"
-	cam.HeadScale = (options and options.headscale) or 1
+	cam.HeadScale = options.headscale
     if part == Enum.UserCFrame.Head then
         headpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move)
     elseif part == Enum.UserCFrame.LeftHand then
@@ -289,12 +259,11 @@ getgenv().con2 = game:GetService("RunService").RenderStepped:connect(function()
         rightarmalign:SetVelocity(Vector3.new(0,0,-99999999))
         rightarmalign:SetCFrame(CFrame.Angles(math.rad(options.righthandrotoffset.X),math.rad(options.righthandrotoffset.Y),math.rad(options.righthandrotoffset.Z)):Inverse()*CFrame.new(0,0,8*(negitive and -1 or 1)))
     elseif rightarmalign then
-        rightarmalign:SetVelocity(Vector3.new(1,1,1))
+        rightarmalign:SetVelocity(Vector3.new(0.1,0.1,0.1))
         rightarmalign:SetCFrame(CFrame.new(0,0,0))
     end
 end)
 
--- Execute the new hatdrop method on current character
 NewHatdropCallback(Player.Character, function(allhats)
     for i,v in pairs(allhats) do
         if not v[1]:FindFirstChild("Handle") then continue end
@@ -309,9 +278,8 @@ NewHatdropCallback(Player.Character, function(allhats)
     end
 end)
 
--- Handle character respawning
 getgenv().conn = Player.CharacterAdded:Connect(function(Character)
-    wait(0.5) -- Wait for character to fully load
+    wait(0.5)
     NewHatdropCallback(Character, function(allhats)
         for i,v in pairs(allhats) do
             if not v[1]:FindFirstChild("Handle") then continue end
