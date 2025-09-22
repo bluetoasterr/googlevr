@@ -101,6 +101,8 @@ function Align(Part1,Part0,cf,isflingpart)
         end
         
         Part1.CanCollide=false
+        Part1.AssemblyLinearVelocity = Vector3.new(0,0,0)
+        Part1.AssemblyAngularVelocity = Vector3.new(0,0,0)
         
         if lastTween then
             lastTween:Cancel()
