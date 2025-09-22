@@ -74,13 +74,18 @@ end
 
 function Align(Part1,Part0,cf,isflingpart) 
     local up = isflingpart
-    
-    Part1.Anchored = false
-    
-    local attach0 = Instance.new("Attachment")
-    attach0.Parent = Part1
-    
-    local attach1 = Instance.new("Attachment")
+    local velocity = Vector3.new(5,5,5)
+    local con;con=ps:Connect(function()
+        if up~=nil then up=not up end
+        if not Part1:IsDescendantOf(workspace) then con:Disconnect() return end
+        if not _isnetworkowner(Part1) then return end
+        Part1.CanCollide=false
+        Part1.CFrame=Part0.CFrame*cf
+        Part1.Velocity = velocity
+    end)
+
+    return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
+endnew("Attachment")
     attach1.Parent = Part0
     attach1.CFrame = cf
     
