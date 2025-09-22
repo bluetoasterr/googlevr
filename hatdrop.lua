@@ -99,9 +99,6 @@ function Align(Part1,Part0,cf,isflingpart)
             con:Disconnect() 
             return 
         end
-        if not _isnetworkowner(Part1) then 
-            Part1:SetNetworkOwner(game.Players.LocalPlayer)
-        end
         
         Part1.CanCollide=false
         
