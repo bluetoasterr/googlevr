@@ -79,41 +79,44 @@ end
 
 function Align(Part1,Part0,cf,isflingpart) 
     local up = isflingpart
+    local TweenService = game:GetService("TweenService")
     
-    local attach0 = Instance.new("Attachment")
-    attach0.Parent = Part1
+    Part1.Anchored = false
     
-    local attach1 = Instance.new("Attachment")
-    attach1.Parent = Part0
-    attach1.CFrame = cf
+    local tweenInfo = TweenInfo.new(
+        0.05,  -- Very short duration for responsiveness
+        Enum.EasingStyle.Linear,
+        Enum.EasingDirection.InOut,
+        0,
+        false,
+        0
+    )
     
-    local alignPos = Instance.new("AlignPosition")
-    alignPos.Attachment0 = attach0
-    alignPos.Attachment1 = attach1
-    alignPos.MaxForce = 9999999
-    alignPos.MaxVelocity = math.huge
-    alignPos.Responsiveness = 200
-    alignPos.Parent = Part1
-    
-    local alignOri = Instance.new("AlignOrientation")
-    alignOri.Attachment0 = attach0
-    alignOri.Attachment1 = attach1
-    alignOri.MaxTorque = 9999999
-    alignOri.MaxAngularVelocity = math.huge
-    alignOri.Responsiveness = 200
-    alignOri.Parent = Part1
+    local lastTween = nil
     
     local con;con=ps:Connect(function()
         if not Part1:IsDescendantOf(workspace) then 
             con:Disconnect() 
             return 
         end
+        if not _isnetworkowner(Part1) then 
+            Part1:SetNetworkOwner(game.Players.LocalPlayer)
+        end
+        
         Part1.CanCollide=false
+        
+        if lastTween then
+            lastTween:Cancel()
+        end
+        
+        local targetCFrame = Part0.CFrame * cf
+        lastTween = TweenService:Create(Part1, tweenInfo, {CFrame = targetCFrame})
+        lastTween:Play()
     end)
 
     return {
         SetVelocity = function(self,v) end,
-        SetCFrame = function(self,v) attach1.CFrame = v end,
+        SetCFrame = function(self,v) cf = v end,
     }
 end
 
