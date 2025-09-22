@@ -8,14 +8,19 @@ local options = getgenv().options
 
 local function createpart(size, name,h)
 	local Part = Instance.new("Part")
-	if h and options.outlinesEnabled then 
+	if h and options and options.outlinesEnabled then 
 		local SelectionBox = Instance.new("SelectionBox")
 		SelectionBox.Adornee = Part
 		SelectionBox.LineThickness = 0.05
 		SelectionBox.Parent = Part
 	end
 	Part.Parent = workspace
-	Part.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+	local char = game.Players.LocalPlayer.Character
+	if char and char:FindFirstChild("HumanoidRootPart") then
+		Part.CFrame = char.HumanoidRootPart.CFrame
+	else
+		Part.CFrame = CFrame.new(0,0,0)
+	end
 	Part.Size = size
 	Part.Transparency = 1
 	Part.CanCollide = false
@@ -190,7 +195,7 @@ end
 
 local cam = workspace.CurrentCamera
 cam.CameraType = "Scriptable"
-cam.HeadScale = options.headscale
+cam.HeadScale = (options and options.headscale) or 1
 
 game:GetService("StarterGui"):SetCore("VREnableControllerModels", false)
 
@@ -198,7 +203,7 @@ local rightarmalign = nil
 
 getgenv().con5 = input.UserCFrameChanged:connect(function(part,move)
     cam.CameraType = "Scriptable"
-	cam.HeadScale = options.headscale
+	cam.HeadScale = (options and options.headscale) or 1
     if part == Enum.UserCFrame.Head then
         headpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move)
     elseif part == Enum.UserCFrame.LeftHand then
