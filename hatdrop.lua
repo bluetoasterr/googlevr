@@ -1,8 +1,13 @@
---hatdrop
+--hatdrop fr
+
+local ps = game:GetService("RunService").PostSimulation
+local input = game:GetService("UserInputService")
+local Player = game.Players.LocalPlayer
+local options = getgenv().options
 
 local function createpart(size, name,h)
 	local Part = Instance.new("Part")
-	if h and getgenv().options.outlinesEnabled then 
+	if h and options.outlinesEnabled then 
 		local SelectionBox = Instance.new("SelectionBox")
 		SelectionBox.Adornee = Part
 		SelectionBox.LineThickness = 0.05
@@ -17,11 +22,6 @@ local function createpart(size, name,h)
 	Part.Name = name
 	return Part
 end
-
-local ps = game:GetService("RunService").PostSimulation
-local input = game:GetService("UserInputService")
-local Player = game.Players.LocalPlayer
-local options = getgenv().options
 
 local lefthandpart = createpart(Vector3.new(2,1,1), "moveRH",true)
 local righthandpart = createpart(Vector3.new(2,1,1), "moveRH",true)
@@ -76,20 +76,20 @@ end
 
 function Align(Part1,Part0,cf,isflingpart) 
     local up = isflingpart
-    local velocity = Vector3.new(20,20,20)
+    local velocity = Vector3.new(0,0,0)
     local con;con=ps:Connect(function()
         if up~=nil then up=not up end
         if not Part1:IsDescendantOf(workspace) then con:Disconnect() return end
         if not _isnetworkowner(Part1) then return end
         Part1.CanCollide=false
         Part1.CFrame=Part0.CFrame*cf
-        Part1.Velocity = velocity or Vector3.new(20,20,20)
+        Part1.Velocity = velocity
     end)
 
     return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
 end
 
--- NEW HATDROP METHOD - DROP ALL ACCESSORIES IN R6 AND R15 BY ShownApe#7272
+
 function NewHatdropCallback(Character, callback)
     local block = false -- Set to true if you want to remove meshes
     local character = Character
