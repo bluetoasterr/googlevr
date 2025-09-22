@@ -1,5 +1,4 @@
--- NEW HATDROP METHOD BY ShownApe#7272
--- Modified for Sky VR compatibility
+--hatdrop
 
 local function createpart(size, name,h)
 	local Part = Instance.new("Part")
