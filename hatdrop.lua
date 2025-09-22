@@ -75,6 +75,8 @@ end
 function Align(Part1,Part0,cf,isflingpart) 
     local up = isflingpart
     
+    Part1.Anchored = false
+    
     local attach0 = Instance.new("Attachment")
     attach0.Parent = Part1
     
