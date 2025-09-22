@@ -77,18 +77,7 @@ end
 
 function Align(Part1,Part0,cf,isflingpart) 
     local up = isflingpart
-    local velocity = Vector3.new(1,1,1)
-    local con;con=ps:Connect(function()
-        if up~=nil then up=not up end
-        if not Part1:IsDescendantOf(workspace) then con:Disconnect() return end
-        if not _isnetworkowner(Part1) then return end
-        Part1.CanCollide=false
-        Part1.CFrame=Part0.CFrame*cf
-        Part1.Velocity = velocity
-    end)
-
-    return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
-end.1,0.1,0.1)
+    local velocity = Vector3.new(0.1,0.1,0.1)
     local con;con=ps:Connect(function()
         if up~=nil then up=not up end
         if not Part1:IsDescendantOf(workspace) then con:Disconnect() return end
