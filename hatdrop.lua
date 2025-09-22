@@ -74,44 +74,34 @@ end
 
 function Align(Part1,Part0,cf,isflingpart) 
     local up = isflingpart
-    local velocity = Vector3.new(5,5,5)
-    local con;con=ps:Connect(function()
-        if up~=nil then up=not up end
-        if not Part1:IsDescendantOf(workspace) then con:Disconnect() return end
-        if not _isnetworkowner(Part1) then return end
-        Part1.CanCollide=false
-        Part1.CFrame=Part0.CFrame*cf
-        Part1.Velocity = velocity
-    end)
-
-    return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
-endnew("Attachment")
+    
+    local attach0 = Instance.new("Attachment")
+    attach0.Parent = Part1
+    
+    local attach1 = Instance.new("Attachment")
     attach1.Parent = Part0
     attach1.CFrame = cf
     
     local alignPos = Instance.new("AlignPosition")
     alignPos.Attachment0 = attach0
     alignPos.Attachment1 = attach1
-    alignPos.MaxForce = (Part0.Name == "moveRH" and parts.right == Part0) and 100000 or 9999999
+    alignPos.MaxForce = 9999999
     alignPos.MaxVelocity = math.huge
-    alignPos.Responsiveness = (Part0.Name == "moveRH" and parts.right == Part0) and 50 or 200
+    alignPos.Responsiveness = 200
     alignPos.Parent = Part1
     
     local alignOri = Instance.new("AlignOrientation")
     alignOri.Attachment0 = attach0
     alignOri.Attachment1 = attach1
-    alignOri.MaxTorque = (Part0.Name == "moveRH" and parts.right == Part0) and 100000 or 9999999
+    alignOri.MaxTorque = 9999999
     alignOri.MaxAngularVelocity = math.huge
-    alignOri.Responsiveness = (Part0.Name == "moveRH" and parts.right == Part0) and 50 or 200
+    alignOri.Responsiveness = 200
     alignOri.Parent = Part1
     
     local con;con=ps:Connect(function()
         if not Part1:IsDescendantOf(workspace) then 
             con:Disconnect() 
             return 
-        end
-        if not _isnetworkowner(Part1) then 
-            Part1:SetNetworkOwner(game.Players.LocalPlayer)
         end
         Part1.CanCollide=false
     end)
