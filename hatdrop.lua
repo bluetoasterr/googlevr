@@ -8,19 +8,14 @@ local options = getgenv().options
 
 local function createpart(size, name,h)
 	local Part = Instance.new("Part")
-	if h and options and options.outlinesEnabled then 
+	if h and options.outlinesEnabled then 
 		local SelectionBox = Instance.new("SelectionBox")
 		SelectionBox.Adornee = Part
 		SelectionBox.LineThickness = 0.05
 		SelectionBox.Parent = Part
 	end
 	Part.Parent = workspace
-	local char = game.Players.LocalPlayer.Character
-	if char and char:FindFirstChild("HumanoidRootPart") then
-		Part.CFrame = char.HumanoidRootPart.CFrame
-	else
-		Part.CFrame = CFrame.new(0,0,0)
-	end
+	Part.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
 	Part.Size = size
 	Part.Transparency = 1
 	Part.CanCollide = false
@@ -195,7 +190,7 @@ end
 
 local cam = workspace.CurrentCamera
 cam.CameraType = "Scriptable"
-cam.HeadScale = (options and options.headscale) or 1
+cam.HeadScale = options.headscale
 
 game:GetService("StarterGui"):SetCore("VREnableControllerModels", false)
 
@@ -203,7 +198,7 @@ local rightarmalign = nil
 
 getgenv().con5 = input.UserCFrameChanged:connect(function(part,move)
     cam.CameraType = "Scriptable"
-	cam.HeadScale = (options and options.headscale) or 1
+	cam.HeadScale = options.headscale
     if part == Enum.UserCFrame.Head then
         headpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move)
     elseif part == Enum.UserCFrame.LeftHand then
@@ -264,7 +259,7 @@ getgenv().con2 = game:GetService("RunService").RenderStepped:connect(function()
         rightarmalign:SetVelocity(Vector3.new(0,0,-99999999))
         rightarmalign:SetCFrame(CFrame.Angles(math.rad(options.righthandrotoffset.X),math.rad(options.righthandrotoffset.Y),math.rad(options.righthandrotoffset.Z)):Inverse()*CFrame.new(0,0,8*(negitive and -1 or 1)))
     elseif rightarmalign then
-        rightarmalign:SetVelocity(Vector3.new(1,1,1))
+        rightarmalign:SetVelocity(Vector3.new(20,20,20))
         rightarmalign:SetCFrame(CFrame.new(0,0,0))
     end
 end)
