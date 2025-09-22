@@ -5,18 +5,23 @@ local options = getgenv().options
 
 local function createpart(size, name,h)
 	local Part = Instance.new("Part")
-	if h and options.outlinesEnabled then 
+	if h and options and options.outlinesEnabled then 
 		local SelectionBox = Instance.new("SelectionBox")
 		SelectionBox.Adornee = Part
 		SelectionBox.LineThickness = 0.05
 		SelectionBox.Parent = Part
 	end
 	Part.Parent = workspace
-	Part.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+	local char = game.Players.LocalPlayer.Character
+	if char and char:FindFirstChild("HumanoidRootPart") then
+		Part.CFrame = char.HumanoidRootPart.CFrame
+	else
+		Part.CFrame = CFrame.new(0,0,0)
+	end
 	Part.Size = size
 	Part.Transparency = 1
 	Part.CanCollide = false
-	Part.Anchored = true
+	Part.Anchored = false
 	Part.Name = name
 	return Part
 end
@@ -75,28 +80,15 @@ end
 function Align(Part1,Part0,cf,isflingpart) 
     local up = isflingpart
     
-    local attach0 = Instance.new("Attachment")
-    attach0.Parent = Part1
+    Part1.Anchored = false
+    Part0.Anchored = false
     
-    local attach1 = Instance.new("Attachment")
-    attach1.Parent = Part0
-    attach1.CFrame = cf
+    local weld = Instance.new("WeldConstraint")
+    weld.Part0 = Part1
+    weld.Part1 = Part0
+    weld.Parent = Part1
     
-    local alignPos = Instance.new("AlignPosition")
-    alignPos.Attachment0 = attach0
-    alignPos.Attachment1 = attach1
-    alignPos.MaxForce = 9999999
-    alignPos.MaxVelocity = math.huge
-    alignPos.Responsiveness = 200
-    alignPos.Parent = Part1
-    
-    local alignOri = Instance.new("AlignOrientation")
-    alignOri.Attachment0 = attach0
-    alignOri.Attachment1 = attach1
-    alignOri.MaxTorque = 9999999
-    alignOri.MaxAngularVelocity = math.huge
-    alignOri.Responsiveness = 200
-    alignOri.Parent = Part1
+    Part1.CFrame = Part0.CFrame * cf
     
     local con;con=ps:Connect(function()
         if not Part1:IsDescendantOf(workspace) then 
@@ -104,11 +96,22 @@ function Align(Part1,Part0,cf,isflingpart)
             return 
         end
         Part1.CanCollide=false
+        Part0.CanCollide=false
     end)
 
     return {
         SetVelocity = function(self,v) end,
-        SetCFrame = function(self,v) attach1.CFrame = v end,
+        SetCFrame = function(self,v) 
+            if weld and weld.Parent then
+                weld:Destroy()
+            end
+            Part1.CFrame = Part0.CFrame * v
+            local newWeld = Instance.new("WeldConstraint")
+            newWeld.Part0 = Part1
+            newWeld.Part1 = Part0
+            newWeld.Parent = Part1
+            weld = newWeld
+        end,
     }
 end
 
@@ -190,7 +193,7 @@ end
 
 local cam = workspace.CurrentCamera
 cam.CameraType = "Scriptable"
-cam.HeadScale = options.headscale
+cam.HeadScale = (options and options.headscale) or 1
 
 game:GetService("StarterGui"):SetCore("VREnableControllerModels", false)
 
@@ -198,7 +201,7 @@ local rightarmalign = nil
 
 getgenv().con5 = input.UserCFrameChanged:connect(function(part,move)
     cam.CameraType = "Scriptable"
-	cam.HeadScale = options.headscale
+	cam.HeadScale = (options and options.headscale) or 1
     if part == Enum.UserCFrame.Head then
         headpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move)
     elseif part == Enum.UserCFrame.LeftHand then
