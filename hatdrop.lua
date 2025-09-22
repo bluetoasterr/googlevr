@@ -21,7 +21,7 @@ local function createpart(size, name,h)
 	Part.Size = size
 	Part.Transparency = 1
 	Part.CanCollide = false
-	Part.Anchored = false
+	Part.Anchored = true
 	Part.Name = name
 	return Part
 end
@@ -61,8 +61,8 @@ function findMeshID(id)
     end
     if getgenv().right=="meshid:"..id then return true,"right" end
     if getgenv().left=="meshid:"..id then return true,"left" end
-    if options.leftToy=="meshid:"..id then return true,"leftToy" end
-    if options.rightToy=="meshid:"..id then return true,"rightToy" end
+    if options and options.leftToy and options.leftToy=="meshid:"..id then return true,"leftToy" end
+    if options and options.rightToy and options.rightToy=="meshid:"..id then return true,"rightToy" end
     return false
 end
 
@@ -72,70 +72,48 @@ function findHatName(id)
     end
     if getgenv().right==id then return true,"right" end
     if getgenv().left==id then return true,"left" end
-    if options.leftToy==id then return true,"leftToy" end
-    if options.rightToy==id then return true,"rightToy" end
+    if options and options.leftToy and options.leftToy==id then return true,"leftToy" end
+    if options and options.rightToy and options.rightToy==id then return true,"rightToy" end
     return false
 end
 
 function Align(Part1,Part0,cf,isflingpart) 
     local up = isflingpart
-    local TweenService = game:GetService("TweenService")
     
-    Part1.Anchored = false
+    local attach0 = Instance.new("Attachment")
+    attach0.Parent = Part1
     
-    local tweenInfo = TweenInfo.new(
-        0.05,  -- Very short duration for responsiveness
-        Enum.EasingStyle.Linear,
-        Enum.EasingDirection.InOut,
-        0,
-        false,
-        0
-    )
+    local attach1 = Instance.new("Attachment")
+    attach1.Parent = Part0
+    attach1.CFrame = cf
     
-    local lastTween = nil
+    local alignPos = Instance.new("AlignPosition")
+    alignPos.Attachment0 = attach0
+    alignPos.Attachment1 = attach1
+    alignPos.MaxForce = 9999999
+    alignPos.MaxVelocity = math.huge
+    alignPos.Responsiveness = 200
+    alignPos.Parent = Part1
+    
+    local alignOri = Instance.new("AlignOrientation")
+    alignOri.Attachment0 = attach0
+    alignOri.Attachment1 = attach1
+    alignOri.MaxTorque = 9999999
+    alignOri.MaxAngularVelocity = math.huge
+    alignOri.Responsiveness = 200
+    alignOri.Parent = Part1
     
     local con;con=ps:Connect(function()
         if not Part1:IsDescendantOf(workspace) then 
             con:Disconnect() 
             return 
         end
-        if not _isnetworkowner(Part1) then 
-            Part1:SetNetworkOwner(game.Players.LocalPlayer)
-        end
-        
         Part1.CanCollide=false
-        
-        -- Cancel previous tween and start new one
-        if lastTween then
-            lastTween:Cancel()
-        end
-        
-        local targetCFrame = Part0.CFrame * cf
-        lastTween = TweenService:Create(Part1, tweenInfo, {CFrame = targetCFrame})
-        lastTween:Play()
     end)
 
     return {
         SetVelocity = function(self,v) end,
-        SetCFrame = function(self,v) cf = v end,
-    }
-end
-        Part0.CanCollide=false
-    end)
-
-    return {
-        SetVelocity = function(self,v) end,
-        SetCFrame = function(self,v) 
-            if weld and weld.Parent then
-                weld:Destroy()
-            end
-            Part1.CFrame = Part0.CFrame * v
-            local newWeld = Instance.new("WeldConstraint")
-            newWeld.Part0 = Part1
-            newWeld.Part1 = Part0
-            newWeld.Parent = Part1
-            weld = newWeld
-        end,
+        SetCFrame = function(self,v) attach1.CFrame = v end,
     }
 end
 
@@ -229,12 +207,14 @@ getgenv().con5 = input.UserCFrameChanged:connect(function(part,move)
     if part == Enum.UserCFrame.Head then
         headpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move)
     elseif part == Enum.UserCFrame.LeftHand then
-        lefthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(options.lefthandrotoffset.X),math.rad(options.lefthandrotoffset.Y),math.rad(options.lefthandrotoffset.Z)))
+        local leftOffset = (options and options.lefthandrotoffset) or Vector3.new(0,0,0)
+        lefthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(leftOffset.X),math.rad(leftOffset.Y),math.rad(leftOffset.Z)))
         if lefttoyenable then
             lefttoypart.CFrame = lefthandpart.CFrame * ltoypos
         end
     elseif part == Enum.UserCFrame.RightHand then
-        righthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(options.righthandrotoffset.X),math.rad(options.righthandrotoffset.Y),math.rad(options.righthandrotoffset.Z)))
+        local rightOffset = (options and options.righthandrotoffset) or Vector3.new(0,0,0)
+        righthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(rightOffset.X),math.rad(rightOffset.Y),math.rad(rightOffset.Z)))
         if righttoyenable then
             righttoypart.CFrame = righthandpart.CFrame * rtoypos
         end
@@ -242,20 +222,20 @@ getgenv().con5 = input.UserCFrameChanged:connect(function(part,move)
 end)
 
 getgenv().con4 = input.InputBegan:connect(function(key)
-	if key.KeyCode == options.thirdPersonButtonToggle then
+	if options and options.thirdPersonButtonToggle and key.KeyCode == options.thirdPersonButtonToggle then
 		thirdperson = not thirdperson
 	end
 	if key.KeyCode == Enum.KeyCode.ButtonR1 then
 		R1down = true
 	end
-    if key.KeyCode == options.leftToyBind then
+    if options and options.leftToyBind and key.KeyCode == options.leftToyBind then
 		if not lfirst then
 			ltoypos = lefttoypart.CFrame:ToObjectSpace(lefthandpart.CFrame):Inverse()
 		end
 		lfirst = false
         lefttoyenable = not lefttoyenable
     end
-	if key.KeyCode == options.rightToyBind then
+	if options and options.rightToyBind and key.KeyCode == options.rightToyBind then
 		if not rfirst then
 			rtoypos = righttoypart.CFrame:ToObjectSpace(righthandpart.CFrame):Inverse()
 		end
@@ -278,13 +258,16 @@ end)
 
 local negitive = true
 getgenv().con2 = game:GetService("RunService").RenderStepped:connect(function()
-	if R1down then
-		cam.CFrame = cam.CFrame:Lerp(cam.CoordinateFrame + (righthandpart.CFrame * CFrame.Angles(math.rad(options.righthandrotoffset.X),math.rad(options.righthandrotoffset.Y),math.rad(options.righthandrotoffset.Z)):Inverse() * CFrame.Angles(math.rad(options.controllerRotationOffset.X),math.rad(options.controllerRotationOffset.Y),math.rad(options.controllerRotationOffset.Z))).LookVector * cam.HeadScale/2, 0.5)
+	if R1down and options then
+		local rightOffset = options.righthandrotoffset or Vector3.new(0,0,0)
+		local controllerOffset = options.controllerRotationOffset or Vector3.new(0,0,0)
+		cam.CFrame = cam.CFrame:Lerp(cam.CoordinateFrame + (righthandpart.CFrame * CFrame.Angles(math.rad(rightOffset.X),math.rad(rightOffset.Y),math.rad(rightOffset.Z)):Inverse() * CFrame.Angles(math.rad(controllerOffset.X),math.rad(controllerOffset.Y),math.rad(controllerOffset.Z))).LookVector * cam.HeadScale/2, 0.5)
 	end
     if R2down and rightarmalign then
         negitive=not negitive
         rightarmalign:SetVelocity(Vector3.new(0,0,-99999999))
-        rightarmalign:SetCFrame(CFrame.Angles(math.rad(options.righthandrotoffset.X),math.rad(options.righthandrotoffset.Y),math.rad(options.righthandrotoffset.Z)):Inverse()*CFrame.new(0,0,8*(negitive and -1 or 1)))
+        local rightOffset = (options and options.righthandrotoffset) or Vector3.new(0,0,0)
+        rightarmalign:SetCFrame(CFrame.Angles(math.rad(rightOffset.X),math.rad(rightOffset.Y),math.rad(rightOffset.Z)):Inverse()*CFrame.new(0,0,8*(negitive and -1 or 1)))
     elseif rightarmalign then
         rightarmalign:SetVelocity(Vector3.new(0.1,0.1,0.1))
         rightarmalign:SetCFrame(CFrame.new(0,0,0))
@@ -295,7 +278,11 @@ NewHatdropCallback(Player.Character, function(allhats)
     for i,v in pairs(allhats) do
         if not v[1]:FindFirstChild("Handle") then continue end
         if v[2]=="headhats" then 
-            v[1].Handle.Transparency = options.HeadHatTransparency or 1 
+            local transparency = 1
+            if options and options.HeadHatTransparency then
+                transparency = options.HeadHatTransparency
+            end
+            v[1].Handle.Transparency = transparency
         end
 
         local align = Align(v[1].Handle,parts[v[2]],((v[2]=="headhats")and getgenv()[v[2]][(v[3])]) or CFrame.identity)
@@ -311,7 +298,11 @@ getgenv().conn = Player.CharacterAdded:Connect(function(Character)
         for i,v in pairs(allhats) do
             if not v[1]:FindFirstChild("Handle") then continue end
             if v[2]=="headhats" then 
-                v[1].Handle.Transparency = options.HeadHatTransparency or 1 
+                local transparency = 1
+                if options and options.HeadHatTransparency then
+                    transparency = options.HeadHatTransparency
+                end
+                v[1].Handle.Transparency = transparency
             end
 
             local align = Align(v[1].Handle,parts[v[2]],((v[2]=="headhats")and getgenv()[v[2]][(v[3])]) or CFrame.identity)
