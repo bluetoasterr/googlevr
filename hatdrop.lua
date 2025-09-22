@@ -1,4 +1,9 @@
-local ps = game:GetService("RunService").PostSimulation
+function Align(Part1,Part0,cf,isflingpart) 
+    local up = isflingpart
+    local baseVelocity = Vector3.new(20,20,20)
+    local currentVelocity = baseVelocity
+    
+    local con;con=ps:Connect(functionlocal ps = game:GetService("RunService").PostSimulation
 local input = game:GetService("UserInputService")
 local Player = game.Players.LocalPlayer
 local options = getgenv().options
@@ -79,39 +84,18 @@ end
 
 function Align(Part1,Part0,cf,isflingpart) 
     local up = isflingpart
-    local TweenService = game:GetService("TweenService")
-    
-    Part1.Anchored = false
-    
-    local tweenInfo = TweenInfo.new(
-        0.05,  -- Very short duration for responsiveness
-        Enum.EasingStyle.Linear,
-        Enum.EasingDirection.InOut,
-        0,
-        false,
-        0
-    )
-    
-    local lastTween = nil
-    
+    local velocity = Vector3.new(20,20,20)
     local con;con=ps:Connect(function()
-        if not Part1:IsDescendantOf(workspace) then 
-            con:Disconnect() 
-            return 
-        end
-        
+        if up~=nil then up=not up end
+        if not Part1:IsDescendantOf(workspace) then con:Disconnect() return end
+        if not _isnetworkowner(Part1) then return end
         Part1.CanCollide=false
-        Part1.AssemblyLinearVelocity = Vector3.new(0,0,0)
-        Part1.AssemblyAngularVelocity = Vector3.new(0,0,0)
-        
-        if lastTween then
-            lastTween:Cancel()
-        end
-        
-        local targetCFrame = Part0.CFrame * cf
-        lastTween = TweenService:Create(Part1, tweenInfo, {CFrame = targetCFrame})
-        lastTween:Play()
+        Part1.CFrame=Part0.CFrame*cf
+        Part1.Velocity = velocity
     end)
+
+    return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
+end
 
     return {
         SetVelocity = function(self,v) end,
