@@ -1,5 +1,5 @@
 
--- sky vr
+--new vr fr
 
 local loader = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
