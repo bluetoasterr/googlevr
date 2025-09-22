@@ -79,23 +79,47 @@ end
 
 function Align(Part1,Part0,cf,isflingpart) 
     local up = isflingpart
+    local TweenService = game:GetService("TweenService")
     
     Part1.Anchored = false
-    Part0.Anchored = false
     
-    local weld = Instance.new("WeldConstraint")
-    weld.Part0 = Part1
-    weld.Part1 = Part0
-    weld.Parent = Part1
+    local tweenInfo = TweenInfo.new(
+        0.05,  -- Very short duration for responsiveness
+        Enum.EasingStyle.Linear,
+        Enum.EasingDirection.InOut,
+        0,
+        false,
+        0
+    )
     
-    Part1.CFrame = Part0.CFrame * cf
+    local lastTween = nil
     
     local con;con=ps:Connect(function()
         if not Part1:IsDescendantOf(workspace) then 
             con:Disconnect() 
             return 
         end
+        if not _isnetworkowner(Part1) then 
+            Part1:SetNetworkOwner(game.Players.LocalPlayer)
+        end
+        
         Part1.CanCollide=false
+        
+        -- Cancel previous tween and start new one
+        if lastTween then
+            lastTween:Cancel()
+        end
+        
+        local targetCFrame = Part0.CFrame * cf
+        lastTween = TweenService:Create(Part1, tweenInfo, {CFrame = targetCFrame})
+        lastTween:Play()
+    end)
+
+    return {
+        SetVelocity = function(self,v) end,
+        SetCFrame = function(self,v) cf = v end,
+    }
+end
         Part0.CanCollide=false
     end)
 
