@@ -1,3 +1,4 @@
+-- hat drop
 local ps = game:GetService("RunService").PostSimulation
 local input = game:GetService("UserInputService")
 local Player = game.Players.LocalPlayer
@@ -75,43 +76,57 @@ end
 function Align(Part1,Part0,cf,isflingpart) 
     local up = isflingpart
     
-    Part1.Anchored = false
-    
-    local attach0 = Instance.new("Attachment")
-    attach0.Parent = Part1
-    
-    local attach1 = Instance.new("Attachment")
-    attach1.Parent = Part0
-    attach1.CFrame = cf
-    
-    local alignPos = Instance.new("AlignPosition")
-    alignPos.Attachment0 = attach0
-    alignPos.Attachment1 = attach1
-    alignPos.MaxForce = 9999999
-    alignPos.MaxVelocity = math.huge
-    alignPos.Responsiveness = 200
-    alignPos.Parent = Part1
-    
-    local alignOri = Instance.new("AlignOrientation")
-    alignOri.Attachment0 = attach0
-    alignOri.Attachment1 = attach1
-    alignOri.MaxTorque = 9999999
-    alignOri.MaxAngularVelocity = math.huge
-    alignOri.Responsiveness = 200
-    alignOri.Parent = Part1
-    
-    local con;con=ps:Connect(function()
-        if not Part1:IsDescendantOf(workspace) then 
-            con:Disconnect() 
-            return 
-        end
-        Part1.CanCollide=false
-    end)
+    if Part0.Name == "moveH" then
+        Part1.Anchored = false
+        local velocity = Vector3.new(25.9,25.9,25.9)
+        local con;con=ps:Connect(function()
+            if up~=nil then up=not up end
+            if not Part1:IsDescendantOf(workspace) then con:Disconnect() return end
+            if not _isnetworkowner(Part1) then return end
+            Part1.CanCollide=false
+            Part1.CFrame=Part0.CFrame*cf
+            Part1.Velocity = velocity
+        end)
+        return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
+    else
+        Part1.Anchored = false
+        
+        local attach0 = Instance.new("Attachment")
+        attach0.Parent = Part1
+        
+        local attach1 = Instance.new("Attachment")
+        attach1.Parent = Part0
+        attach1.CFrame = cf
+        
+        local alignPos = Instance.new("AlignPosition")
+        alignPos.Attachment0 = attach0
+        alignPos.Attachment1 = attach1
+        alignPos.MaxForce = 9999999
+        alignPos.MaxVelocity = math.huge
+        alignPos.Responsiveness = 200
+        alignPos.Parent = Part1
+        
+        local alignOri = Instance.new("AlignOrientation")
+        alignOri.Attachment0 = attach0
+        alignOri.Attachment1 = attach1
+        alignOri.MaxTorque = 9999999
+        alignOri.MaxAngularVelocity = math.huge
+        alignOri.Responsiveness = 200
+        alignOri.Parent = Part1
+        
+        local con;con=ps:Connect(function()
+            if not Part1:IsDescendantOf(workspace) then 
+                con:Disconnect() 
+                return 
+            end
+            Part1.CanCollide=false
+        end)
 
-    return {
-        SetVelocity = function(self,v) end,
-        SetCFrame = function(self,v) attach1.CFrame = v end,
-    }
+        return {
+            SetVelocity = function(self,v) end,
+            SetCFrame = function(self,v) attach1.CFrame = v end,
+        }
+    end
 end
 
 function NewHatdropCallback(Character, callback)
@@ -258,10 +273,7 @@ getgenv().con2 = game:GetService("RunService").RenderStepped:connect(function()
 	end
     if R2down and rightarmalign then
         negitive=not negitive
-        rightarmalign:SetVelocity(Vector3.new(0,0,-99999999))
-        rightarmalign:SetCFrame(CFrame.Angles(math.rad(options.righthandrotoffset.X),math.rad(options.righthandrotoffset.Y),math.rad(options.righthandrotoffset.Z)):Inverse()*CFrame.new(0,0,8*(negitive and -1 or 1)))
     elseif rightarmalign then
-        rightarmalign:SetVelocity(Vector3.new(0.1,0.1,0.1))
         rightarmalign:SetCFrame(CFrame.new(0,0,0))
     end
 end)
