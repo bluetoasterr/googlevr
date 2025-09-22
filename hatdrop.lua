@@ -1,4 +1,3 @@
--- hat drop
 local ps = game:GetService("RunService").PostSimulation
 local input = game:GetService("UserInputService")
 local Player = game.Players.LocalPlayer
@@ -101,16 +100,16 @@ function Align(Part1,Part0,cf,isflingpart)
         local alignPos = Instance.new("AlignPosition")
         alignPos.Attachment0 = attach0
         alignPos.Attachment1 = attach1
-        alignPos.MaxForce = 9999999
-        alignPos.MaxVelocity = math.huge
+        alignPos.MaxForce = 999999999
+        alignPos.MaxVelocity = 999999999
         alignPos.Responsiveness = 200
         alignPos.Parent = Part1
         
         local alignOri = Instance.new("AlignOrientation")
         alignOri.Attachment0 = attach0
         alignOri.Attachment1 = attach1
-        alignOri.MaxTorque = 9999999
-        alignOri.MaxAngularVelocity = math.huge
+        alignOri.MaxTorque = 999999999
+        alignOri.MaxAngularVelocity = 999999999
         alignOri.Responsiveness = 200
         alignOri.Parent = Part1
         
@@ -118,6 +117,9 @@ function Align(Part1,Part0,cf,isflingpart)
             if not Part1:IsDescendantOf(workspace) then 
                 con:Disconnect() 
                 return 
+            end
+            if not _isnetworkowner(Part1) then 
+                Part1:SetNetworkOwner(game.Players.LocalPlayer)
             end
             Part1.CanCollide=false
         end)
