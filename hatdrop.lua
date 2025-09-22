@@ -1,4 +1,80 @@
-local ps = game:GetService("RunService").PostSimulation
+function Align(Part1,Part0,cf,isflingpart) 
+    local up = isflingpart
+    
+    if Part0.Name == "moveH" then
+        Part1.Anchored = false
+        local velocity = Vector3.new(25.9,25.9,25.9)
+        local con;con=ps:Connect(function()
+            if up~=nil then up=not up end
+            if not Part1:IsDescendantOf(workspace) then con:Disconnect() return end
+            if not _isnetworkowner(Part1) then return end
+            Part1.CanCollide=false
+            Part1.CFrame=Part0.CFrame*cf
+            Part1.Velocity = velocity
+        end)
+        return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
+    elseif Part0.Name == "moveRH" and parts.right == Part0 then
+        Part1.Anchored = false
+        local con;con=ps:Connect(function()
+            if up~=nil then up=not up end
+            if not Part1:IsDescendantOf(workspace) then con:Disconnect() return end
+            if not _isnetworkowner(Part1) then return end
+            Part1.CanCollide=false
+            Part1.CFrame=Part0.CFrame*cf
+            Part1.AssemblyAngularVelocity = Vector3.new(10,10,10)
+        end)
+        return {SetVelocity = function(self,v) end,SetCFrame = function(self,v) cf=v end,}
+    elseif Part0.Name == "moveRH" and parts.left == Part0 then
+        Part1.Anchored = false
+        local velocity = Vector3.new(1,1,1)
+        local con;con=ps:Connect(function()
+            if up~=nil then up=not up end
+            if not Part1:IsDescendantOf(workspace) then con:Disconnect() return end
+            if not _isnetworkowner(Part1) then return end
+            Part1.CanCollide=false
+            Part1.CFrame=Part0.CFrame*cf
+            Part1.Velocity = velocity
+        end)
+        return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
+    else
+        Part1.Anchored = false
+        
+        local attach0 = Instance.new("Attachment")
+        attach0.Parent = Part1
+        
+        local attach1 = Instance.new("Attachment")
+        attach1.Parent = Part0
+        attach1.CFrame = cf
+        
+        local alignPos = Instance.new("AlignPosition")
+        alignPos.Attachment0 = attach0
+        alignPos.Attachment1 = attach1
+        alignPos.MaxForce = 999999999
+        alignPos.MaxVelocity = 999999999
+        alignPos.Responsiveness = 200
+        alignPos.Parent = Part1
+        
+        local alignOri = Instance.new("AlignOrientation")
+        alignOri.Attachment0 = attach0
+        alignOri.Attachment1 = attach1
+        alignOri.MaxTorque = 999999999
+        alignOri.MaxAngularVelocity = 999999999
+        alignOri.Responsiveness = 200
+        alignOri.Parent = Part1
+        
+        local con;con=ps:Connect(function()
+            if not Part1:IsDescendantOf(workspace) then 
+                con:Disconnect() 
+                return 
+            end
+            if not _isnetworkowner(Part1) then 
+                Part1:SetNetworkOwner(game.Players.LocalPlayer)
+            end
+            Part1.CanCollide=false
+        end)
+
+        return {
+            SetVelocity = function(selflocal ps = game:GetService("RunService").PostSimulation
 local input = game:GetService("UserInputService")
 local Player = game.Players.LocalPlayer
 local options = getgenv().options
@@ -75,71 +151,46 @@ end
 function Align(Part1,Part0,cf,isflingpart) 
     local up = isflingpart
     
-    if Part0.Name == "moveH" then
-        Part1.Anchored = false
-        local velocity = Vector3.new(25.9,25.9,25.9)
-        local con;con=ps:Connect(function()
-            if up~=nil then up=not up end
-            if not Part1:IsDescendantOf(workspace) then con:Disconnect() return end
-            if not _isnetworkowner(Part1) then return end
-            Part1.CanCollide=false
-            Part1.CFrame=Part0.CFrame*cf
-            Part1.Velocity = velocity
-        end)
-        return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
-    elseif Part0.Name == "moveRH" and parts.right == Part0 then
-        Part1.Anchored = false
-        local con;con=ps:Connect(function()
-            if up~=nil then up=not up end
-            if not Part1:IsDescendantOf(workspace) then con:Disconnect() return end
-            if not _isnetworkowner(Part1) then return end
-            Part1.CanCollide=false
-            Part1.CFrame=Part0.CFrame*cf
-            Part1.AssemblyAngularVelocity = Vector3.new(10,10,10)
-        end)
-        return {SetVelocity = function(self,v) end,SetCFrame = function(self,v) cf=v end,}
-    else
-        Part1.Anchored = false
-        
-        local attach0 = Instance.new("Attachment")
-        attach0.Parent = Part1
-        
-        local attach1 = Instance.new("Attachment")
-        attach1.Parent = Part0
-        attach1.CFrame = cf
-        
-        local alignPos = Instance.new("AlignPosition")
-        alignPos.Attachment0 = attach0
-        alignPos.Attachment1 = attach1
-        alignPos.MaxForce = 999999999
-        alignPos.MaxVelocity = 999999999
-        alignPos.Responsiveness = 200
-        alignPos.Parent = Part1
-        
-        local alignOri = Instance.new("AlignOrientation")
-        alignOri.Attachment0 = attach0
-        alignOri.Attachment1 = attach1
-        alignOri.MaxTorque = 999999999
-        alignOri.MaxAngularVelocity = 999999999
-        alignOri.Responsiveness = 200
-        alignOri.Parent = Part1
-        
-        local con;con=ps:Connect(function()
-            if not Part1:IsDescendantOf(workspace) then 
-                con:Disconnect() 
-                return 
-            end
-            if not _isnetworkowner(Part1) then 
-                Part1:SetNetworkOwner(game.Players.LocalPlayer)
-            end
-            Part1.CanCollide=false
-        end)
+    Part1.Anchored = false
+    
+    local attach0 = Instance.new("Attachment")
+    attach0.Parent = Part1
+    
+    local attach1 = Instance.new("Attachment")
+    attach1.Parent = Part0
+    attach1.CFrame = cf
+    
+    local alignPos = Instance.new("AlignPosition")
+    alignPos.Attachment0 = attach0
+    alignPos.Attachment1 = attach1
+    alignPos.MaxForce = 999999999
+    alignPos.MaxVelocity = 999999999
+    alignPos.Responsiveness = 200
+    alignPos.Parent = Part1
+    
+    local alignOri = Instance.new("AlignOrientation")
+    alignOri.Attachment0 = attach0
+    alignOri.Attachment1 = attach1
+    alignOri.MaxTorque = 999999999
+    alignOri.MaxAngularVelocity = 999999999
+    alignOri.Responsiveness = 200
+    alignOri.Parent = Part1
+    
+    local con;con=ps:Connect(function()
+        if not Part1:IsDescendantOf(workspace) then 
+            con:Disconnect() 
+            return 
+        end
+        if not _isnetworkowner(Part1) then 
+            Part1:SetNetworkOwner(game.Players.LocalPlayer)
+        end
+        Part1.CanCollide=false
+    end)
 
-        return {
-            SetVelocity = function(self,v) end,
-            SetCFrame = function(self,v) attach1.CFrame = v end,
-        }
-    end
+    return {
+        SetVelocity = function(self,v) end,
+        SetCFrame = function(self,v) attach1.CFrame = v end,
+    }
 end
 
 function NewHatdropCallback(Character, callback)
