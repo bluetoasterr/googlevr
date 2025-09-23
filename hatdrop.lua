@@ -102,7 +102,6 @@ function Align(Part1,Part0,cf,isflingpart)
     alignPos.MaxVelocity = 999999999999
     alignPos.Responsiveness = 200
     alignPos.RigidityEnabled = true
-    alignPos.ReactionTorqueEnabled = false
     alignPos.Parent = Part1
     
     local alignOri = Instance.new("AlignOrientation")
@@ -112,7 +111,6 @@ function Align(Part1,Part0,cf,isflingpart)
     alignOri.MaxAngularVelocity = 999999999999
     alignOri.Responsiveness = 200
     alignOri.RigidityEnabled = true
-    alignOri.ReactionTorqueEnabled = false
     alignOri.Parent = Part1
     
     local con;con=ps:Connect(function()
@@ -182,6 +180,7 @@ function Align(Part1,Part0,cf,isflingpart)
 end
 
 function NewHatdropCallback(Character, callback)
+    if not Character then return end
     local block = false
     local character = Character
     
@@ -338,23 +337,25 @@ getgenv().con2 = game:GetService("RunService").RenderStepped:connect(function()
     end
 end)
 
-NewHatdropCallback(Player.Character, function(allhats)
-    for i,v in pairs(allhats) do
-        if not v[1]:FindFirstChild("Handle") then continue end
-        if v[2]=="headhats" then 
-            local transparency = 1
-            if options and options.HeadHatTransparency then
-                transparency = options.HeadHatTransparency
+if Player.Character then
+    NewHatdropCallback(Player.Character, function(allhats)
+        for i,v in pairs(allhats) do
+            if not v[1]:FindFirstChild("Handle") then continue end
+            if v[2]=="headhats" then 
+                local transparency = 1
+                if options and options.HeadHatTransparency then
+                    transparency = options.HeadHatTransparency
+                end
+                v[1].Handle.Transparency = transparency
             end
-            v[1].Handle.Transparency = transparency
-        end
 
-        local align = Align(v[1].Handle,parts[v[2]],((v[2]=="headhats")and (getgenv()[v[2]] and getgenv()[v[2]][(v[3])])) or CFrame.identity)
-        if v[2]=="right" then
-            rightarmalign = align
+            local align = Align(v[1].Handle,parts[v[2]],((v[2]=="headhats")and (getgenv()[v[2]] and getgenv()[v[2]][(v[3])])) or CFrame.identity)
+            if v[2]=="right" then
+                rightarmalign = align
+            end
         end
-    end
-end)
+    end)
+end
 
 getgenv().conn = Player.CharacterAdded:Connect(function(Character)
     wait(0.5)
