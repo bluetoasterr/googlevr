@@ -1,3 +1,4 @@
+--hatdrop
 local ps = game:GetService("RunService").PostSimulation
 local input = game:GetService("UserInputService")
 local Player = game.Players.LocalPlayer
