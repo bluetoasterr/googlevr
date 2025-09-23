@@ -3,21 +3,32 @@ local input = game:GetService("UserInputService")
 local Player = game.Players.LocalPlayer
 local options = getgenv().options or {}
 
-local function createpart(size, name,h)
+local function createpart(size, name, h)
 	local Part = Instance.new("Part")
-	if h and options and options.outlinesEnabled then 
-		local SelectionBox = Instance.new("SelectionBox")
-		SelectionBox.Adornee = Part
-		SelectionBox.LineThickness = 0.05
-		SelectionBox.Parent = Part
+	if h then
+		if options then
+			if options.outlinesEnabled then 
+				local SelectionBox = Instance.new("SelectionBox")
+				SelectionBox.Adornee = Part
+				SelectionBox.LineThickness = 0.05
+				SelectionBox.Parent = Part
+			end
+		end
 	end
 	Part.Parent = workspace
-	local char = game.Players.LocalPlayer.Character
-	if char and char:FindFirstChild("HumanoidRootPart") then
-		Part.CFrame = char.HumanoidRootPart.CFrame
-	else
-		Part.CFrame = CFrame.new(0,0,0)
+	
+	local targetCFrame = CFrame.new(0,0,0)
+	if game.Players.LocalPlayer then
+		local char = game.Players.LocalPlayer.Character
+		if char then
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				targetCFrame = hrp.CFrame
+			end
+		end
 	end
+	Part.CFrame = targetCFrame
+	
 	Part.Size = size
 	Part.Transparency = 1
 	Part.CanCollide = false
@@ -313,7 +324,14 @@ end
 
 local cam = workspace.CurrentCamera
 cam.CameraType = "Scriptable"
-cam.HeadScale = (options and options.headscale) or 1
+
+local defaultHeadScale = 1
+if options then
+	if options.headscale then
+		defaultHeadScale = options.headscale
+	end
+end
+cam.HeadScale = defaultHeadScale
 
 game:GetService("StarterGui"):SetCore("VREnableControllerModels", false)
 
@@ -321,11 +339,14 @@ local rightarmalign = nil
 
 getgenv().con5 = input.UserCFrameChanged:connect(function(part,move)
     cam.CameraType = "Scriptable"
-	local headScale = 1
-	if options and options.headscale then
-		headScale = options.headscale
-	end
-	cam.HeadScale = headScale
+    
+    local currentHeadScale = 1
+    if options then
+        if options.headscale then
+            currentHeadScale = options.headscale
+        end
+    end
+    cam.HeadScale = currentHeadScale
     if part == Enum.UserCFrame.Head then
         headpart.CFrame = cam.CFrame*(CFrame.new(move.p*(headScale-1))*move)
     elseif part == Enum.UserCFrame.LeftHand then
