@@ -304,18 +304,28 @@ local rightarmalign = nil
 
 getgenv().con5 = input.UserCFrameChanged:connect(function(part,move)
     cam.CameraType = "Scriptable"
-	cam.HeadScale = (options and options.headscale) or 1
+	local headScale = 1
+	if options and options.headscale then
+		headScale = options.headscale
+	end
+	cam.HeadScale = headScale
     if part == Enum.UserCFrame.Head then
-        headpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move)
+        headpart.CFrame = cam.CFrame*(CFrame.new(move.p*(headScale-1))*move)
     elseif part == Enum.UserCFrame.LeftHand then
-        local leftOffset = (options and options.lefthandrotoffset) or Vector3.new(0,0,0)
-        lefthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(leftOffset.X),math.rad(leftOffset.Y),math.rad(leftOffset.Z)))
+        local leftOffset = Vector3.new(0,0,0)
+        if options and options.lefthandrotoffset then
+            leftOffset = options.lefthandrotoffset
+        end
+        lefthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(headScale-1))*move*CFrame.Angles(math.rad(leftOffset.X),math.rad(leftOffset.Y),math.rad(leftOffset.Z)))
         if lefttoyenable then
             lefttoypart.CFrame = lefthandpart.CFrame * ltoypos
         end
     elseif part == Enum.UserCFrame.RightHand then
-        local rightOffset = (options and options.righthandrotoffset) or Vector3.new(0,0,0)
-        righthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(rightOffset.X),math.rad(rightOffset.Y),math.rad(rightOffset.Z)))
+        local rightOffset = Vector3.new(0,0,0)
+        if options and options.righthandrotoffset then
+            rightOffset = options.righthandrotoffset
+        end
+        righthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(headScale-1))*move*CFrame.Angles(math.rad(rightOffset.X),math.rad(rightOffset.Y),math.rad(rightOffset.Z)))
         if righttoyenable then
             righttoypart.CFrame = righthandpart.CFrame * rtoypos
         end
