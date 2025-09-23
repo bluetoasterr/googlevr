@@ -79,106 +79,17 @@ end
 
 function Align(Part1,Part0,cf,isflingpart) 
     local up = isflingpart
-    
-    Part1.Anchored = false
-    Part0.Anchored = false
-    
-    local ownershipFrames = 0
-    local lastReceiveAge = Part1.ReceiveAge
-    local antiSleepTime = tick()
-    local currentTime = tick()
-    
-    local attach0 = Instance.new("Attachment")
-    attach0.Parent = Part1
-    
-    local attach1 = Instance.new("Attachment")
-    attach1.Parent = Part0
-    attach1.CFrame = cf
-    
-    local alignPos = Instance.new("AlignPosition")
-    alignPos.Attachment0 = attach0
-    alignPos.Attachment1 = attach1
-    alignPos.MaxForce = 999999999999
-    alignPos.MaxVelocity = 999999999999
-    alignPos.Responsiveness = 200
-    alignPos.RigidityEnabled = true
-    alignPos.ReactionTorqueEnabled = false
-    alignPos.Parent = Part1
-    
-    local alignOri = Instance.new("AlignOrientation")
-    alignOri.Attachment0 = attach0
-    alignOri.Attachment1 = attach1
-    alignOri.MaxTorque = 999999999999
-    alignOri.MaxAngularVelocity = 999999999999
-    alignOri.Responsiveness = 200
-    alignOri.RigidityEnabled = true
-    alignOri.ReactionTorqueEnabled = false
-    alignOri.Parent = Part1
-    
+    local velocity = Vector3.new(20,20,20)
     local con;con=ps:Connect(function()
-        if not Part1:IsDescendantOf(workspace) then 
-            con:Disconnect() 
-            return 
-        end
-        
-        currentTime = tick()
-        
-        local hasOwnership = Part1.ReceiveAge == 0
-        
-        if hasOwnership then
-            ownershipFrames = 0
-            lastReceiveAge = Part1.ReceiveAge
-            
-            local antiSleep = math.sin(currentTime * 15) * 0.0015
-            local antiSleepVector = Vector3.new(antiSleep, antiSleep, antiSleep)
-            
-            local axis = 27 + math.sin(currentTime)
-            local linearVelocity = Part0.AssemblyLinearVelocity * axis
-            Part1.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-            Part1.AssemblyLinearVelocity = Vector3.new(linearVelocity.X, axis, linearVelocity.Z)
-            
-            Part1.CFrame = Part0.CFrame * cf + antiSleepVector
-            
-        else
-            ownershipFrames = ownershipFrames + 1
-            
-            pcall(function() Part1:SetNetworkOwner(game.Players.LocalPlayer) end)
-            
-            if ownershipFrames > 5 then
-                Part1.AssemblyLinearVelocity = Vector3.new(1, 1, 1)
-                Part1.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-            end
-            
-            if ownershipFrames > 15 then
-                Part1.CFrame = Part0.CFrame * cf
-                Part1.Velocity = Vector3.new(20, 20, 20)
-                
-                alignPos.Enabled = false
-                alignOri.Enabled = false
-                wait(0.1)
-                alignPos.Enabled = true
-                alignOri.Enabled = true
-                ownershipFrames = 0
-            end
-        end
-        
-        Part1.CanCollide = false
-        Part0.CanCollide = false
-        
-        if not alignPos.Enabled then alignPos.Enabled = true end
-        if not alignOri.Enabled then alignOri.Enabled = true end
+        if up~=nil then up=not up end
+        if not Part1:IsDescendantOf(workspace) then con:Disconnect() return end
+        if not _isnetworkowner(Part1) then return end
+        Part1.CanCollide=false
+        Part1.CFrame=Part0.CFrame*cf
+        Part1.Velocity = velocity
     end)
 
-    return {
-        SetVelocity = function(self,v) end,
-        SetCFrame = function(self,v) 
-            cf = v
-            if attach1 and attach1.Parent then
-                attach1.CFrame = v 
-            end
-        end,
-        GetOwnershipFrames = function(self) return ownershipFrames end,
-    }
+    return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
 end
 
 function NewHatdropCallback(Character, callback)
