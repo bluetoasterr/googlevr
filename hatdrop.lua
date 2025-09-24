@@ -1,5 +1,5 @@
 -- NEW HATDROP METHOD BY ShownApe#7272
--- Modified for Sky VR compatibility
+-- Modified for Sky VR compatibility with ApplyImpulseAtPosition
 
 local ps = game:GetService("RunService").PostSimulation
 local input = game:GetService("UserInputService")
@@ -77,17 +77,16 @@ end
 
 function Align(Part1,Part0,cf,isflingpart) 
     local up = isflingpart
-    local velocity = Vector3.new(20,20,20)
     local con;con=ps:Connect(function()
         if up~=nil then up=not up end
         if not Part1:IsDescendantOf(workspace) then con:Disconnect() return end
         if not _isnetworkowner(Part1) then return end
         Part1.CanCollide=false
         Part1.CFrame=Part0.CFrame*cf
-        Part1.Velocity = velocity or Vector3.new(20,20,20)
+        Part1:ApplyImpulseAtPosition(Vector3.new(0,0,0), Part1.Position)
     end)
 
-    return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
+    return {SetVelocity = function(self,v) -- Kept for compatibility but does nothing now end,SetCFrame = function(self,v) cf=v end,}
 end
 
 -- NEW HATDROP METHOD - DROP ALL ACCESSORIES IN R6 AND R15 BY ShownApe#7272
