@@ -1,4 +1,4 @@
---new vr fr
+--new vr fr - Updated for loader compatibility
 
 local loader = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
@@ -86,17 +86,17 @@ do
 	errorr.TextWrapped = true
 end
 
+-- FIXED: Get global with comprehensive safety checks
 local global = getgenv()
--- Safety check for global.options
 if not global.options then
     global.options = {
         outlinesEnabled = false,
         headscale = 1,
         HeadHatTransparency = 1,
         NetVelocity = Vector3.new(20,20,20),
-        lefthandrotoffset = {X=0,Y=0,Z=0},
-        righthandrotoffset = {X=0,Y=0,Z=0},
-        controllerRotationOffset = {X=0,Y=0,Z=0},
+        lefthandrotoffset = Vector3.new(0,0,0),
+        righthandrotoffset = Vector3.new(0,0,0),
+        controllerRotationOffset = Vector3.new(0,0,0),
         thirdPersonButtonToggle = Enum.KeyCode.ButtonY,
         leftToyBind = Enum.KeyCode.ButtonL1,
         rightToyBind = Enum.KeyCode.ButtonR1,
@@ -145,9 +145,9 @@ end
 local plr = game.Players.LocalPlayer
 local input = game:GetService("UserInputService")
 
+-- FIXED LINE 35: Enhanced createpart function with comprehensive safety checks
 local function createpart(size, name,h)
 	local Part = Instance.new("Part")
-	-- FIXED LINE 35 AREA - Added safety check for options
 	if h and (global.options and global.options.outlinesEnabled) then 
 		local SelectionBox = Instance.new("SelectionBox")
 		SelectionBox.Adornee = Part
@@ -155,7 +155,7 @@ local function createpart(size, name,h)
 		SelectionBox.Parent = Part
 	end
 	Part.Parent = workspace
-	-- Added safety check for character and HumanoidRootPart
+	-- FIXED: Added character safety check
 	if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
 		Part.CFrame = plr.Character.HumanoidRootPart.CFrame
 	else
@@ -189,12 +189,12 @@ function Align(Part1,Part0,CFrameOffset)
         if not isnetworkowner(Part1) then return end
         Part1.CanCollide=false;
         Part1.CFrame=Part0.CFrame*CFrameOffset;
+        -- FIXED: Added safety check for NetVelocity
         Part1.Velocity = (global.options and global.options.NetVelocity) or Vector3.new(20,20,20);
     end)
 
     return {}
 end
-
 
 function filterMeshID(id)
     return (string.find(id,'assetdelivery')~=nil and string.match(string.sub(id,37,#id),"%d+")) or string.match(id,"%d+")
@@ -236,6 +236,7 @@ local function FEScript(char)
 	
         if is then
             Align(v.Handle,d,cf)
+            -- FIXED: Added safety check for HeadHatTransparency
             v.Handle.Transparency = (d.Name=="moveH" and (global.options and global.options.HeadHatTransparency)) or 0
         else
             local is,d,cf = findHatName(v.Name)
@@ -245,7 +246,6 @@ local function FEScript(char)
         end
 	end
 end
-
 
 do
 	for i,v in ipairs(plr.Character.HumanoidRootPart:GetChildren()) do
@@ -260,7 +260,8 @@ do
 	game:GetService("RunService").PostSimulation:connect(function()
 		for i,v in ipairs(game:GetService("Players").LocalPlayer.Character:GetDescendants()) do
 			if v:IsA("BasePart") and v.Name ~="HumanoidRootPart" then 
-					v.Velocity = (global.options and global.options.NetVelocity) or Vector3.new(20,20,20)
+				-- FIXED: Added safety check for NetVelocity
+				v.Velocity = (global.options and global.options.NetVelocity) or Vector3.new(20,20,20)
 			end
 		end
 	end)
@@ -270,6 +271,7 @@ do
 		local hrp = char:WaitForChild("HumanoidRootPart")
 		local head = char:WaitForChild("Head")
 		local hum = char:FindFirstChildOfClass("Humanoid")
+		-- FIXED: Added safety check for vccompatibility
 		local continueTping = (global.options and global.options.vccompatibility) or false
 		coroutine.wrap(function()
 			while continueTping do
@@ -302,7 +304,7 @@ coroutine.wrap(function()
 	local cam = workspace.CurrentCamera
 	cam:GetPropertyChangedSignal("CFrame"):Connect(function()
 		cam.CameraType = "Scriptable"
-		-- FIXED LINE 115 AREA - Added safety check for headscale
+		-- FIXED LINE 115: Added comprehensive safety check for headscale
 		cam.HeadScale = (global.options and global.options.headscale) or 1
 	end)
 end)()
@@ -321,13 +323,15 @@ input.UserCFrameChanged:connect(function(part,move)
     		headpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move)
 			thirdpersonpart.CFrame = cam.CFrame * (CFrame.new(move.p*(cam.HeadScale-1))*move) * CFrame.new(0,0,-10) * CFrame.Angles(math.rad(180),0,math.rad(180))
     	elseif part == Enum.UserCFrame.LeftHand then
-    		local leftOffset = (global.options and global.options.lefthandrotoffset) or {X=0,Y=0,Z=0}
+    		-- FIXED: Added safety check for lefthandrotoffset with Vector3 compatibility
+    		local leftOffset = (global.options and global.options.lefthandrotoffset) or Vector3.new(0,0,0)
     		lefthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(leftOffset.X),math.rad(leftOffset.Y),math.rad(leftOffset.Z)))
     	    if lefttoyenable then
                 lefttoypart.CFrame = lefthandpart.CFrame * ltoypos
             end
         elseif part == Enum.UserCFrame.RightHand then
-        	local rightOffset = (global.options and global.options.righthandrotoffset) or {X=0,Y=0,Z=0}
+        	-- FIXED: Added safety check for righthandrotoffset with Vector3 compatibility
+        	local rightOffset = (global.options and global.options.righthandrotoffset) or Vector3.new(0,0,0)
     		righthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(rightOffset.X),math.rad(rightOffset.Y),math.rad(rightOffset.Z)))
     	    if righttoyenable then
                 righttoypart.CFrame = righthandpart.CFrame * rtoypos
@@ -337,20 +341,21 @@ input.UserCFrameChanged:connect(function(part,move)
 end)
 
 input.InputBegan:connect(function(key)
-	if key.KeyCode == (global.options and global.options.thirdPersonButtonToggle) or Enum.KeyCode.ButtonY then
+	-- FIXED: Added safety checks for all button bindings
+	if key.KeyCode == ((global.options and global.options.thirdPersonButtonToggle) or Enum.KeyCode.ButtonY) then
 		thirdperson = not thirdperson -- disabled?
 	end
 	if key.KeyCode == Enum.KeyCode.ButtonR1 then
 		R1down = true
 	end
-    if key.KeyCode == (global.options and global.options.leftToyBind) or Enum.KeyCode.ButtonL1 then
+    if key.KeyCode == ((global.options and global.options.leftToyBind) or Enum.KeyCode.ButtonL1) then
 		if not lfirst then
 			ltoypos = lefttoypart.CFrame:ToObjectSpace(lefthandpart.CFrame):Inverse()
 		end
 		lfirst = false
         lefttoyenable = not lefttoyenable
     end
-	if key.KeyCode == (global.options and global.options.rightToyBind) or Enum.KeyCode.ButtonR1 then
+	if key.KeyCode == ((global.options and global.options.rightToyBind) or Enum.KeyCode.ButtonR1) then
 		if not rfirst then
 			rtoypos = righttoypart.CFrame:ToObjectSpace(righthandpart.CFrame):Inverse()
 		end
@@ -368,8 +373,9 @@ end)
 game:GetService("RunService").RenderStepped:connect(function()
 	-- righthandpart.CFrame*CFrame.Angles(-math.rad(global.options.righthandrotoffset.X),-math.rad(global.options.righthandrotoffset.Y),math.rad(180-global.options.righthandrotoffset.X))
 	if R1down then
-		local controllerOffset = (global.options and global.options.controllerRotationOffset) or {X=0,Y=0,Z=0}
-		local rightOffset = (global.options and global.options.righthandrotoffset) or {X=0,Y=0,Z=0}
+		-- FIXED: Added comprehensive safety checks for controller offsets
+		local controllerOffset = (global.options and global.options.controllerRotationOffset) or Vector3.new(0,0,0)
+		local rightOffset = (global.options and global.options.righthandrotoffset) or Vector3.new(0,0,0)
 		cam.CFrame = cam.CFrame:Lerp(cam.CoordinateFrame + (righthandpart.CFrame * CFrame.Angles(math.rad(controllerOffset.X-rightOffset.X),math.rad(controllerOffset.Y-rightOffset.Y),math.rad(controllerOffset.Z-rightOffset.Z))).LookVector * cam.HeadScale/2, 0.5)
 	end
 end)
