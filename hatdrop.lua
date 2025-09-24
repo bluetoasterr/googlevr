@@ -1,22 +1,10 @@
 -- NEW HATDROP METHOD BY ShownApe#7272
--- Modified for Sky VR compatibility with ApplyImpulseAtPosition
--- Updated to work with loader script
+-- Modified for Sky VR compatibility
 
 local ps = game:GetService("RunService").PostSimulation
 local input = game:GetService("UserInputService")
 local Player = game.Players.LocalPlayer
-
--- FIXED: Get options with comprehensive safety checks
-local options = getgenv().options or {}
-if not options.outlinesEnabled then options.outlinesEnabled = false end
-if not options.headscale then options.headscale = 1 end
-if not options.HeadHatTransparency then options.HeadHatTransparency = 1 end
-if not options.lefthandrotoffset then options.lefthandrotoffset = Vector3.new(0,0,0) end
-if not options.righthandrotoffset then options.righthandrotoffset = Vector3.new(0,0,0) end
-if not options.controllerRotationOffset then options.controllerRotationOffset = Vector3.new(0,0,0) end
-if not options.thirdPersonButtonToggle then options.thirdPersonButtonToggle = Enum.KeyCode.ButtonY end
-if not options.leftToyBind then options.leftToyBind = Enum.KeyCode.ButtonL1 end
-if not options.rightToyBind then options.rightToyBind = Enum.KeyCode.ButtonR1 end
+local options = getgenv().options
 
 local function createpart(size, name,h)
 	local Part = Instance.new("Part")
@@ -27,12 +15,7 @@ local function createpart(size, name,h)
 		SelectionBox.Parent = Part
 	end
 	Part.Parent = workspace
-	-- FIXED: Added character safety check
-	if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
-		Part.CFrame = Player.Character.HumanoidRootPart.CFrame
-	else
-		Part.CFrame = CFrame.new(0, 10, 0)
-	end
+	Part.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
 	Part.Size = size
 	Part.Transparency = 1
 	Part.CanCollide = false
@@ -46,7 +29,6 @@ local righthandpart = createpart(Vector3.new(2,1,1), "moveRH",true)
 local headpart = createpart(Vector3.new(1,1,1), "moveH",false)
 local lefttoypart = createpart(Vector3.new(1,1,1), "LToy",true)
 local righttoypart =  createpart(Vector3.new(1,1,1), "RToy",true)
-local thirdpersonpart = createpart(Vector3.new(1,1,1), "thirdpersonpart",false)
 local thirdperson = false
 local lefttoyenable = false
 local righttoyenable = false
@@ -72,7 +54,7 @@ function filterMeshID(id)
 end
 
 function findMeshID(id)
-    for i,v in pairs(getgenv().headhats or {}) do
+    for i,v in pairs(getgenv().headhats) do
         if i=="meshid:"..id then return true,"headhats" end
     end
     if getgenv().right=="meshid:"..id then return true,"right" end
@@ -83,7 +65,7 @@ function findMeshID(id)
 end
 
 function findHatName(id)
-    for i,v in pairs(getgenv().headhats or {}) do
+    for i,v in pairs(getgenv().headhats) do
         if i==id then return true,"headhats" end
     end
     if getgenv().right==id then return true,"right" end
@@ -93,26 +75,23 @@ function findHatName(id)
     return false
 end
 
--- UPDATED: Using ApplyImpulseAtPosition instead of velocity
 function Align(Part1,Part0,cf,isflingpart) 
     local up = isflingpart
+    local velocity = Vector3.new(20,20,20)
     local con;con=ps:Connect(function()
         if up~=nil then up=not up end
         if not Part1:IsDescendantOf(workspace) then con:Disconnect() return end
         if not _isnetworkowner(Part1) then return end
         Part1.CanCollide=false
         Part1.CFrame=Part0.CFrame*cf
-        -- CHANGED: Using ApplyImpulseAtPosition with 0,0,0 instead of velocity
-        Part1:ApplyImpulseAtPosition(Vector3.new(0,0,0), Part1.Position)
+        Part1.Velocity = velocity or Vector3.new(0,-30,0)
     end)
 
-    return {SetVelocity = function(self,v) -- Kept for compatibility but does nothing end,SetCFrame = function(self,v) cf=v end,}
+    return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
 end
 
 -- NEW HATDROP METHOD - DROP ALL ACCESSORIES IN R6 AND R15 BY ShownApe#7272
 function NewHatdropCallback(Character, callback)
-    if not Character then return end
-    
     local block = false -- Set to true if you want to remove meshes
     local character = Character
     
@@ -211,18 +190,13 @@ getgenv().con5 = input.UserCFrameChanged:connect(function(part,move)
 	cam.HeadScale = options.headscale
     if part == Enum.UserCFrame.Head then
         headpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move)
-		thirdpersonpart.CFrame = cam.CFrame * (CFrame.new(move.p*(cam.HeadScale-1))*move) * CFrame.new(0,0,-10) * CFrame.Angles(math.rad(180),0,math.rad(180))
     elseif part == Enum.UserCFrame.LeftHand then
-        -- FIXED: Vector3 compatibility for lefthandrotoffset
-        local leftOffset = options.lefthandrotoffset
-        lefthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(leftOffset.X),math.rad(leftOffset.Y),math.rad(leftOffset.Z)))
+        lefthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(options.lefthandrotoffset.X),math.rad(options.lefthandrotoffset.Y),math.rad(options.lefthandrotoffset.Z)))
         if lefttoyenable then
             lefttoypart.CFrame = lefthandpart.CFrame * ltoypos
         end
     elseif part == Enum.UserCFrame.RightHand then
-        -- FIXED: Vector3 compatibility for righthandrotoffset
-        local rightOffset = options.righthandrotoffset
-        righthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(rightOffset.X),math.rad(rightOffset.Y),math.rad(rightOffset.Z)))
+        righthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(options.righthandrotoffset.X),math.rad(options.righthandrotoffset.Y),math.rad(options.righthandrotoffset.Z)))
         if righttoyenable then
             righttoypart.CFrame = righthandpart.CFrame * rtoypos
         end
@@ -267,10 +241,7 @@ end)
 local negitive = true
 getgenv().con2 = game:GetService("RunService").RenderStepped:connect(function()
 	if R1down then
-		-- FIXED: Vector3 compatibility for controller offsets
-		local controllerOffset = options.controllerRotationOffset
-		local rightOffset = options.righthandrotoffset
-		cam.CFrame = cam.CFrame:Lerp(cam.CoordinateFrame + (righthandpart.CFrame * CFrame.Angles(math.rad(controllerOffset.X),math.rad(controllerOffset.Y),math.rad(controllerOffset.Z)):Inverse() * CFrame.Angles(math.rad(rightOffset.X),math.rad(rightOffset.Y),math.rad(rightOffset.Z))).LookVector * cam.HeadScale/2, 0.5)
+		cam.CFrame = cam.CFrame:Lerp(cam.CoordinateFrame + (righthandpart.CFrame * CFrame.Angles(math.rad(options.righthandrotoffset.X),math.rad(options.righthandrotoffset.Y),math.rad(options.righthandrotoffset.Z)):Inverse() * CFrame.Angles(math.rad(options.controllerRotationOffset.X),math.rad(options.controllerRotationOffset.Y),math.rad(options.controllerRotationOffset.Z))).LookVector * cam.HeadScale/2, 0.5)
 	end
     if R2down and rightarmalign then
         negitive=not negitive
@@ -283,21 +254,19 @@ getgenv().con2 = game:GetService("RunService").RenderStepped:connect(function()
 end)
 
 -- Execute the new hatdrop method on current character
-if Player.Character then
-    NewHatdropCallback(Player.Character, function(allhats)
-        for i,v in pairs(allhats) do
-            if not v[1]:FindFirstChild("Handle") then continue end
-            if v[2]=="headhats" then 
-                v[1].Handle.Transparency = options.HeadHatTransparency or 1 
-            end
-
-            local align = Align(v[1].Handle,parts[v[2]],((v[2]=="headhats")and getgenv()[v[2]][(v[3])]) or CFrame.identity)
-            if v[2]=="right" then
-                rightarmalign = align
-            end
+NewHatdropCallback(Player.Character, function(allhats)
+    for i,v in pairs(allhats) do
+        if not v[1]:FindFirstChild("Handle") then continue end
+        if v[2]=="headhats" then 
+            v[1].Handle.Transparency = options.HeadHatTransparency or 1 
         end
-    end)
-end
+
+        local align = Align(v[1].Handle,parts[v[2]],((v[2]=="headhats")and getgenv()[v[2]][(v[3])]) or CFrame.identity)
+        if v[2]=="right" then
+            rightarmalign = align
+        end
+    end
+end)
 
 -- Handle character respawning
 getgenv().conn = Player.CharacterAdded:Connect(function(Character)
