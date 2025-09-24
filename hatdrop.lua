@@ -4,18 +4,22 @@
 local ps = game:GetService("RunService").PostSimulation
 local input = game:GetService("UserInputService")
 local Player = game.Players.LocalPlayer
-local options = getgenv().options
+local options = getgenv().options or {}
 
 local function createpart(size, name,h)
 	local Part = Instance.new("Part")
-	if h and options.outlinesEnabled then 
+	if h and (options and options.outlinesEnabled) then 
 		local SelectionBox = Instance.new("SelectionBox")
 		SelectionBox.Adornee = Part
 		SelectionBox.LineThickness = 0.05
 		SelectionBox.Parent = Part
 	end
 	Part.Parent = workspace
-	Part.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+	if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+		Part.CFrame = Player.Character.HumanoidRootPart.CFrame
+	else
+		Part.CFrame = CFrame.new(0, 10, 0)
+	end
 	Part.Size = size
 	Part.Transparency = 1
 	Part.CanCollide = false
@@ -178,7 +182,7 @@ end
 
 local cam = workspace.CurrentCamera
 cam.CameraType = "Scriptable"
-cam.HeadScale = options.headscale
+cam.HeadScale = (options and options.headscale) or 1
 
 game:GetService("StarterGui"):SetCore("VREnableControllerModels", false)
 
@@ -186,16 +190,18 @@ local rightarmalign = nil
 
 getgenv().con5 = input.UserCFrameChanged:connect(function(part,move)
     cam.CameraType = "Scriptable"
-	cam.HeadScale = options.headscale
+	cam.HeadScale = (options and options.headscale) or 1
     if part == Enum.UserCFrame.Head then
         headpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move)
     elseif part == Enum.UserCFrame.LeftHand then
-        lefthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(options.lefthandrotoffset.X),math.rad(options.lefthandrotoffset.Y),math.rad(options.lefthandrotoffset.Z)))
+        local leftOffset = (options and options.lefthandrotoffset) or {X=0,Y=0,Z=0}
+        lefthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(leftOffset.X),math.rad(leftOffset.Y),math.rad(leftOffset.Z)))
         if lefttoyenable then
             lefttoypart.CFrame = lefthandpart.CFrame * ltoypos
         end
     elseif part == Enum.UserCFrame.RightHand then
-        righthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(options.righthandrotoffset.X),math.rad(options.righthandrotoffset.Y),math.rad(options.righthandrotoffset.Z)))
+        local rightOffset = (options and options.righthandrotoffset) or {X=0,Y=0,Z=0}
+        righthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(rightOffset.X),math.rad(rightOffset.Y),math.rad(rightOffset.Z)))
         if righttoyenable then
             righttoypart.CFrame = righthandpart.CFrame * rtoypos
         end
