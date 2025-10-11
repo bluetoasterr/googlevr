@@ -1,5 +1,4 @@
--- NEW HATDROP METHOD BY ShownApe#7272
--- Modified for Sky VR compatibility
+
 
 local ps = game:GetService("RunService").PostSimulation
 local input = game:GetService("UserInputService")
