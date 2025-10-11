@@ -1,5 +1,7 @@
 
---new vr fr
+-- hello there hi hi there hi meow idk
+
+
 
 local loader = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
@@ -31,7 +33,7 @@ do
 	ImageLabel.BorderSizePixel = 0
 	ImageLabel.Position = UDim2.new(-0.932431638, 0, -1.4126755, 0)
 	ImageLabel.Size = UDim2.new(2.86000013, 0, 2.8599999, 0)
-	ImageLabel.Image = "http://www.roblox.com/asset/?id=17137351841"
+	ImageLabel.Image = "http://www.roblox.com/asset/?id=85666355610660"
 	UIAspectRatioConstraint.Parent = Frame
 	UIAspectRatioConstraint.AspectRatio = 0.988
 	loader_2.Name = "loader"
@@ -88,6 +90,25 @@ do
 end
 
 local global = getgenv()
+if not global.options then
+    global.options = {
+        outlinesEnabled = false,
+        headscale = 1,
+        HeadHatTransparency = 1,
+        NetVelocity = Vector3.new(20,20,20),
+        lefthandrotoffset = Vector3.new(0,0,0),
+        righthandrotoffset = Vector3.new(0,0,0),
+        controllerRotationOffset = Vector3.new(0,0,0),
+        thirdPersonButtonToggle = Enum.KeyCode.ButtonY,
+        leftToyBind = Enum.KeyCode.ButtonL1,
+        rightToyBind = Enum.KeyCode.ButtonR1,
+        vccompatibility = false,
+        movementSmoothing = 0.3,
+        movementSpeed = 1,
+        locomotionSmoothing = 0.5,
+        locomotionSpeed = 0.5,
+    }
+end
 
 TextLabel.Text = "Loading..."
 t:TweenSize(UDim2.new(0,0,1,0),nil,Enum.EasingStyle.Linear,0)
@@ -132,14 +153,18 @@ local input = game:GetService("UserInputService")
 
 local function createpart(size, name,h)
 	local Part = Instance.new("Part")
-	if h and global.options.outlinesEnabled then 
+	if h and (global.options and global.options.outlinesEnabled) then 
 		local SelectionBox = Instance.new("SelectionBox")
 		SelectionBox.Adornee = Part
 		SelectionBox.LineThickness = 0.05
 		SelectionBox.Parent = Part
 	end
 	Part.Parent = workspace
-	Part.CFrame = plr.Character.HumanoidRootPart.CFrame
+	if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+		Part.CFrame = plr.Character.HumanoidRootPart.CFrame
+	else
+		Part.CFrame = CFrame.new(0, 10, 0)
+	end
 	Part.Size = size
 	Part.Transparency = 1
 	Part.CanCollide = false
@@ -162,42 +187,45 @@ local rfirst = true
 local ltoypos = CFrame.new(1.15,0,0) * CFrame.Angles(0,math.rad(180),0)
 local rtoypos = CFrame.new(1.15,0,0) * CFrame.Angles(0,math.rad(0),0)
 
+local headTarget = headpart.CFrame
+local leftTarget = lefthandpart.CFrame
+local rightTarget = righthandpart.CFrame
+
 function Align(Part1,Part0,CFrameOffset) 
     local con;con=game:GetService("RunService").PostSimulation:Connect(function()
         if not Part1:IsDescendantOf(workspace) then con:Disconnect() return end
         if not isnetworkowner(Part1) then return end
         Part1.CanCollide=false;
         Part1.CFrame=Part0.CFrame*CFrameOffset;
-        Part1.Velocity = Vector3.new(20,20,20) or getgenv().options.NetVelocity;
+        Part1.Velocity = (global.options and global.options.NetVelocity) or Vector3.new(20,20,20);
     end)
 
     return {}
 end
-
 
 function filterMeshID(id)
     return (string.find(id,'assetdelivery')~=nil and string.match(string.sub(id,37,#id),"%d+")) or string.match(id,"%d+")
 end
 
 function findMeshID(id)
-    for i,v in pairs(getgenv().headhats) do
+    for i,v in pairs(getgenv().headhats or {}) do
         if i=="meshid:"..id then return true,headpart,v end
     end
     if getgenv().right=="meshid:"..id then return  true,righthandpart,CFrame.new() end
     if getgenv().left=="meshid:"..id then return   true,lefthandpart,CFrame.new() end
-    if options.leftToy=="meshid:"..id then return  true,lefttoypart,CFrame.new() end
-    if options.rightToy=="meshid:"..id then return true,righttoypart,CFrame.new() end
+    if (global.options and global.options.leftToy)=="meshid:"..id then return  true,lefttoypart,CFrame.new() end
+    if (global.options and global.options.rightToy)=="meshid:"..id then return true,righttoypart,CFrame.new() end
     return false
 end
 
 function findHatName(id)
-    for i,v in pairs(getgenv().headhats) do
+    for i,v in pairs(getgenv().headhats or {}) do
         if i==id then return true,headpart,v end
     end
     if getgenv().right==id then return  true,righthandpart,CFrame.new() end
     if getgenv().left==id then return   true,lefthandpart,CFrame.new() end
-    if options.leftToy==id then return  true,lefttoypart,CFrame.new() end
-    if options.rightToy==id then return true,righttoypart,CFrame.new() end
+    if (global.options and global.options.leftToy)==id then return  true,lefttoypart,CFrame.new() end
+    if (global.options and global.options.rightToy)==id then return true,righttoypart,CFrame.new() end
     return false
 end
 
@@ -215,16 +243,15 @@ local function FEScript(char)
 	
         if is then
             Align(v.Handle,d,cf)
-            v.Handle.Transparency = (d.Name=="moveH" and global.options.HeadHatTransparency) or 0
+            v.Handle.Transparency = (d.Name=="moveH" and (global.options and global.options.HeadHatTransparency)) or 0
         else
             local is,d,cf = findHatName(v.Name)
 	    	if not is then continue end
             Align(v.Handle,d,cf)
-            v.Handle.Transparency = (d.Name=="moveH" and global.options.HeadHatTransparency) or 0
+            v.Handle.Transparency = (d.Name=="moveH" and (global.options and global.options.HeadHatTransparency)) or 0
         end
 	end
 end
-
 
 do
 	for i,v in ipairs(plr.Character.HumanoidRootPart:GetChildren()) do
@@ -239,7 +266,7 @@ do
 	game:GetService("RunService").PostSimulation:connect(function()
 		for i,v in ipairs(game:GetService("Players").LocalPlayer.Character:GetDescendants()) do
 			if v:IsA("BasePart") and v.Name ~="HumanoidRootPart" then 
-					v.Velocity = global.options.NetVelocity
+				v.Velocity = (global.options and global.options.NetVelocity) or Vector3.new(20,20,20)
 			end
 		end
 	end)
@@ -249,7 +276,7 @@ do
 		local hrp = char:WaitForChild("HumanoidRootPart")
 		local head = char:WaitForChild("Head")
 		local hum = char:FindFirstChildOfClass("Humanoid")
-		local continueTping = global.options.vccompatibility
+		local continueTping = (global.options and global.options.vccompatibility) or false
 		coroutine.wrap(function()
 			while continueTping do
 				task.wait()
@@ -276,35 +303,37 @@ task.delay(5,function()
 	loader:Destroy()
 end)
 
--- vr handler starts here
 coroutine.wrap(function()
 	local cam = workspace.CurrentCamera
 	cam:GetPropertyChangedSignal("CFrame"):Connect(function()
 		cam.CameraType = "Scriptable"
-		cam.HeadScale = global.options.headscale
+		cam.HeadScale = (global.options and global.options.headscale) or 1
 	end)
 end)()
 local cam = workspace.CurrentCamera
 
 cam.CameraType = "Scriptable"
-cam.HeadScale = global.options.headscale
+cam.HeadScale = (global.options and global.options.headscale) or 1
 
 game:GetService("StarterGui"):SetCore("VREnableControllerModels", false)
 
 input.UserCFrameChanged:connect(function(part,move)
 	cam.CameraType = "Scriptable"
-	cam.HeadScale = global.options.headscale
+	cam.HeadScale = (global.options and global.options.headscale) or 1
     pcall(function()
+    	local speedMult = (global.options and global.options.movementSpeed) or 1
     	if part == Enum.UserCFrame.Head then
-    		headpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move)
+    		headTarget = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1)*speedMult)*move)
 			thirdpersonpart.CFrame = cam.CFrame * (CFrame.new(move.p*(cam.HeadScale-1))*move) * CFrame.new(0,0,-10) * CFrame.Angles(math.rad(180),0,math.rad(180))
     	elseif part == Enum.UserCFrame.LeftHand then
-    		lefthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(global.options.lefthandrotoffset.X),math.rad(global.options.lefthandrotoffset.Y),math.rad(global.options.lefthandrotoffset.Z)))
+    		local leftOffset = (global.options and global.options.lefthandrotoffset) or Vector3.new(0,0,0)
+    		leftTarget = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1)*speedMult)*move*CFrame.Angles(math.rad(leftOffset.X),math.rad(leftOffset.Y),math.rad(leftOffset.Z)))
     	    if lefttoyenable then
                 lefttoypart.CFrame = lefthandpart.CFrame * ltoypos
             end
         elseif part == Enum.UserCFrame.RightHand then
-    		righthandpart.CFrame = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1))*move*CFrame.Angles(math.rad(global.options.righthandrotoffset.X),math.rad(global.options.righthandrotoffset.Y),math.rad(global.options.righthandrotoffset.Z)))
+        	local rightOffset = (global.options and global.options.righthandrotoffset) or Vector3.new(0,0,0)
+    		rightTarget = cam.CFrame*(CFrame.new(move.p*(cam.HeadScale-1)*speedMult)*move*CFrame.Angles(math.rad(rightOffset.X),math.rad(rightOffset.Y),math.rad(rightOffset.Z)))
     	    if righttoyenable then
                 righttoypart.CFrame = righthandpart.CFrame * rtoypos
             end
@@ -313,20 +342,20 @@ input.UserCFrameChanged:connect(function(part,move)
 end)
 
 input.InputBegan:connect(function(key)
-	if key.KeyCode == global.options.thirdPersonButtonToggle then
-		thirdperson = not thirdperson -- disabled?
+	if key.KeyCode == ((global.options and global.options.thirdPersonButtonToggle) or Enum.KeyCode.ButtonY) then
+		thirdperson = not thirdperson
 	end
 	if key.KeyCode == Enum.KeyCode.ButtonR1 then
 		R1down = true
 	end
-    if key.KeyCode == global.options.leftToyBind then
+    if key.KeyCode == ((global.options and global.options.leftToyBind) or Enum.KeyCode.ButtonL1) then
 		if not lfirst then
 			ltoypos = lefttoypart.CFrame:ToObjectSpace(lefthandpart.CFrame):Inverse()
 		end
 		lfirst = false
         lefttoyenable = not lefttoyenable
     end
-	if key.KeyCode == global.options.rightToyBind then
+	if key.KeyCode == ((global.options and global.options.rightToyBind) or Enum.KeyCode.ButtonR1) then
 		if not rfirst then
 			rtoypos = righttoypart.CFrame:ToObjectSpace(righthandpart.CFrame):Inverse()
 		end
@@ -342,8 +371,25 @@ input.InputEnded:connect(function(key)
 end)
 
 game:GetService("RunService").RenderStepped:connect(function()
-	-- righthandpart.CFrame*CFrame.Angles(-math.rad(global.options.righthandrotoffset.X),-math.rad(global.options.righthandrotoffset.Y),math.rad(180-global.options.righthandrotoffset.X))
+	local smoothing = (global.options and global.options.movementSmoothing) or 0
+	if smoothing > 0 then
+		headpart.CFrame = headpart.CFrame:Lerp(headTarget, 1 - smoothing)
+		lefthandpart.CFrame = lefthandpart.CFrame:Lerp(leftTarget, 1 - smoothing)
+		righthandpart.CFrame = righthandpart.CFrame:Lerp(rightTarget, 1 - smoothing)
+	else
+		headpart.CFrame = headTarget
+		lefthandpart.CFrame = leftTarget
+		righthandpart.CFrame = rightTarget
+	end
+	
 	if R1down then
-		cam.CFrame = cam.CFrame:Lerp(cam.CoordinateFrame + (righthandpart.CFrame * CFrame.Angles(math.rad(global.options.controllerRotationOffset.X-global.options.righthandrotoffset.X),math.rad(global.options.controllerRotationOffset.Y-global.options.righthandrotoffset.Y),math.rad(global.options.controllerRotationOffset.Z-global.options.righthandrotoffset.Z))).LookVector * cam.HeadScale/2, 0.5)
+		local controllerOffset = (global.options and global.options.controllerRotationOffset) or Vector3.new(0,0,0)
+		local rightOffset = (global.options and global.options.righthandrotoffset) or Vector3.new(0,0,0)
+		local locoSmoothing = (global.options and global.options.locomotionSmoothing) or 0.5
+		local locoSpeed = (global.options and global.options.locomotionSpeed) or 0.5
+		
+		local moveDirection = (righthandpart.CFrame * CFrame.Angles(math.rad(controllerOffset.X-rightOffset.X),math.rad(controllerOffset.Y-rightOffset.Y),math.rad(controllerOffset.Z-rightOffset.Z))).LookVector * cam.HeadScale * locoSpeed
+		
+		cam.CFrame = cam.CFrame:Lerp(cam.CoordinateFrame + moveDirection, locoSmoothing)
 	end
 end)
