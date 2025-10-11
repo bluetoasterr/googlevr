@@ -1,8 +1,3 @@
-
--- hello there hi hi there hi meow idk
-
-
-
 local loader = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local ImageLabel = Instance.new("ImageLabel")
@@ -32,7 +27,7 @@ do
 	ImageLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
 	ImageLabel.BorderSizePixel = 0
 	ImageLabel.Position = UDim2.new(-0.932431638, 0, -1.4126755, 0)
-	ImageLabel.Size = UDim2.new(2.86000013, 0, 2.8599999, 0)
+	ImageLabel.Size = UDim2.new(475, 0, 212, 0)
 	ImageLabel.Image = "http://www.roblox.com/asset/?id=85666355610660"
 	UIAspectRatioConstraint.Parent = Frame
 	UIAspectRatioConstraint.AspectRatio = 0.988
@@ -388,7 +383,7 @@ game:GetService("RunService").RenderStepped:connect(function()
 		local locoSmoothing = (global.options and global.options.locomotionSmoothing) or 0.5
 		local locoSpeed = (global.options and global.options.locomotionSpeed) or 0.5
 		
-		local moveDirection = (righthandpart.CFrame * CFrame.Angles(math.rad(controllerOffset.X-rightOffset.X),math.rad(controllerOffset.Y-rightOffset.Y),math.rad(controllerOffset.Z-rightOffset.Z))).LookVector * cam.HeadScale * locoSpeed
+		local moveDirection = (righthandpart.CFrame * CFrame.Angles(math.rad(controllerOffset.X-rightOffset.X),math.rad(controllerOffset.Y-rightOffset.Y),math.rad(controllerOffset.Z-rightOffset.Z))).LookVector * (cam.HeadScale/2) * locoSpeed
 		
 		cam.CFrame = cam.CFrame:Lerp(cam.CoordinateFrame + moveDirection, locoSmoothing)
 	end
