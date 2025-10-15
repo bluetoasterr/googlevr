@@ -1,5 +1,3 @@
-
-
 local ps = game:GetService("RunService").PostSimulation
 local input = game:GetService("UserInputService")
 local Player = game.Players.LocalPlayer
@@ -89,67 +87,145 @@ function Align(Part1,Part0,cf,isflingpart)
     return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
 end
 
--- NEW HATDROP METHOD - DROP ALL ACCESSORIES IN R6 AND R15 BY ShownApe#7272
+-- NEW HATDROP METHOD - drops all your hats wherever you ran the script
 function NewHatdropCallback(Character, callback)
-    local block = false -- Set to true if you want to remove meshes
+    local fph = workspace.FallenPartsDestroyHeight
+    local plr = game.Players.LocalPlayer
     local character = Character
+    local hrp = character:WaitForChild("HumanoidRootPart")
+    local torso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
+    local start = hrp.CFrame
     
-    -- Store original character reference and reset it
-    game.Players.LocalPlayer.Character = nil
-    game.Players.LocalPlayer.Character = character
-    wait(game.Players.RespawnTime + 0.05)
+    local campart = Instance.new("Part",character)
+    campart.Transparency = 1
+    campart.CanCollide = false
+    campart.Size = Vector3.one
+    campart.Position = start.Position
+    campart.Anchored = true
     
-    -- Disable death state
-    if character:FindFirstChildOfClass("Humanoid") then
-        character:FindFirstChildOfClass("Humanoid"):SetStateEnabled(Enum.HumanoidStateType.Dead,false)
-    end
-    
-    -- Remove torso parts (R6 and R15 compatibility)
-    for i, v in pairs(character:GetChildren()) do
-        if v.Name == "Torso" or v.Name == "UpperTorso" then
-            v:Destroy()
-        end
-    end
-    
-    -- Remove HumanoidRootPart
-    if character:FindFirstChild("HumanoidRootPart") then
-        character.HumanoidRootPart:Destroy()
-    end
-    
-    -- Set accessory backend states
-    for i,v in pairs(character:GetChildren()) do
-        if v:IsA("Accessory") then
-            sethiddenproperty(v,"BackendAccoutrementState", 0) -- 0-3 works, 4 is default in-character state
-        end
-    end
-    
-    -- Optional: Remove meshes if block is true
-    if block == true then 
-        for i,v in pairs(character:GetDescendants()) do
-            if v:IsA("SpecialMesh") then
-                v:Destroy()
+    local function updatestate(hat,state)
+        if sethiddenproperty then
+            sethiddenproperty(hat,"BackendAccoutrementState",state)
+        elseif setscriptable then
+            setscriptable(hat,"BackendAccoutrementState",true)
+            hat.BackendAccoutrementState = state
+        else
+            local success = pcall(function()
+                hat.BackendAccoutrementState = state
+            end)
+            if not success then
+                error("executor not supported, sorry!")
             end
         end
     end
     
-    -- Remove all other body parts except Head
+    local allhats = {}
     for i,v in pairs(character:GetChildren()) do
-        if v:IsA("BasePart") and v.Name ~= "Head" then
-            v:Destroy() -- This triggers ChildRemoving event
+        if v:IsA("Accessory") then
+            table.insert(allhats,v)
         end
     end
     
-    -- Optional: Remove head (can be removed if needed)
-    if character:FindFirstChild("Head") then
-        character.Head:remove()
+    local locks = {}
+    for i,v in pairs(allhats) do
+        table.insert(locks,v.Changed:Connect(function(p)
+            if p == "BackendAccoutrementState" then
+                updatestate(v,0)
+            end
+        end))
+        updatestate(v,2)
     end
     
-    -- Wait a bit for everything to process
-    wait(0.1)
+    workspace.FallenPartsDestroyHeight = 0/0
+    
+    local function play(id,speed,prio,weight)
+        local Anim = Instance.new("Animation")
+        Anim.AnimationId = "https"..tostring(math.random(1000000,9999999)).."="..tostring(id)
+        local track = character.Humanoid:LoadAnimation(Anim)
+        track.Priority = prio
+        track:Play()
+        track:AdjustSpeed(speed)
+        track:AdjustWeight(weight)
+        return track
+    end
+    
+    local r6fall = 180436148
+    local r15fall = 507767968
+    local dropcf = CFrame.new(character.HumanoidRootPart.Position.x,fph-.25,character.HumanoidRootPart.Position.z)
+    
+    if character.Humanoid.RigType == Enum.HumanoidRigType.R15 then
+        dropcf = dropcf * CFrame.Angles(math.rad(20),0,0)
+        character.Humanoid:ChangeState(16)
+        play(r15fall,1,5,1).TimePosition = .1
+    else
+        play(r6fall,1,5,1).TimePosition = .1
+    end
+    
+    spawn(function()
+        while hrp.Parent ~= nil do
+            hrp.CFrame = dropcf
+            hrp.Velocity = Vector3.new(0,25,0)
+            hrp.RotVelocity = Vector3.new(0,0,0)
+            game:GetService("RunService").Heartbeat:wait()
+        end
+    end)
+    
+    task.wait(.25)
+    character.Humanoid:ChangeState(15)
+    torso.AncestryChanged:wait()
+    
+    for i,v in pairs(locks) do
+        v:Disconnect()
+    end
+    
+    for i,v in pairs(allhats) do
+        updatestate(v,4)
+    end
+    
+    spawn(function()
+        plr.CharacterAdded:wait():WaitForChild("HumanoidRootPart",10).CFrame = start
+        workspace.FallenPartsDestroyHeight = fph
+    end)
+    
+    local dropped = false
+    repeat
+        local foundhandle = false
+        for i,v in pairs(allhats) do
+            if v:FindFirstChild("Handle") then
+                foundhandle = true
+                if v.Handle.CanCollide then
+                    dropped = true
+                    break
+                end
+            end
+        end
+        if not foundhandle then
+            break
+        end
+        task.wait()
+    until plr.Character ~= character or dropped
+    
+    if dropped then
+        print("dropped")
+        workspace.CurrentCamera.CameraSubject = campart
+        for i,v in pairs(character:GetChildren()) do
+            if v:IsA("Accessory") and v:FindFirstChild("Handle") and v.Handle.CanCollide then
+                spawn(function()
+                    for i = 1,10 do
+                        v.Handle.CFrame = start
+                        v.Handle.Velocity = Vector3.new(0,50,0)
+                        task.wait()
+                    end
+                end)
+            end
+        end
+    else
+        print("failed to drop")
+    end
     
     -- Get all remaining accessories and prepare them for alignment
     local foundmeshids = {}
-    local allhats = {}
+    local processedHats = {}
     
     for i,v in pairs(character:GetChildren()) do
         if not v:IsA"Accessory" then continue end
@@ -165,15 +241,15 @@ function NewHatdropCallback(Character, callback)
         end
 	
         if is then
-            table.insert(allhats,{v,d,"meshid:"..filterMeshID(mesh.MeshId)})
+            table.insert(processedHats,{v,d,"meshid:"..filterMeshID(mesh.MeshId)})
         else
             local is,d = findHatName(v.Name)
             if not is then continue end
-            table.insert(allhats,{v,d,v.Name})
+            table.insert(processedHats,{v,d,v.Name})
         end
     end
     
-    callback(allhats)
+    callback(processedHats)
 end
 
 local cam = workspace.CurrentCamera
