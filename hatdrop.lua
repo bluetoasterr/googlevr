@@ -105,15 +105,9 @@ function Align(Part1,Part0,cf,isflingpart)
     return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
 end
 
--- BAREBONES HATDROP
+-- HATDROP WITHOUT PERMADEATH
 function NewHatdropCallback(character, callback)
     log("========== HAT DROP STARTING ==========")
-    
-    -- BLOCK RESPAWN FOR PERMADEATH
-    log("Blocking respawn signal...")
-    local blockedSignal = replicatesignal(game.Players.LocalPlayer.ConnectDiedSignalBackend)
-    log("Waiting for respawn time...")
-    wait(game.Players.RespawnTime - 0.3)
     
     local fph = workspace.FallenPartsDestroyHeight
     log("Original FallenPartsDestroyHeight: "..tostring(fph))
@@ -212,6 +206,13 @@ function NewHatdropCallback(character, callback)
     end
     log("Set all hat states to 4 (Dropped)")
     
+    -- Respawn player automatically
+    spawn(function()
+        Player.CharacterAdded:wait():WaitForChild("HumanoidRootPart",10).CFrame = start
+        workspace.FallenPartsDestroyHeight = fph
+        log("Player respawned at original position")
+    end)
+    
     local dropped = false
     log("Checking if hats dropped...")
     repeat
@@ -236,8 +237,8 @@ function NewHatdropCallback(character, callback)
     if dropped then
         log("========== HATS DROPPED SUCCESSFULLY ==========")
         
-        -- IMMEDIATELY move hats UP to prevent deletion
-        log("Moving hats up to prevent deletion...")
+        -- Move hats up to start position
+        log("Moving hats to start position...")
         for i,v in pairs(character:GetChildren()) do
             if v:IsA("Accessory") and v:FindFirstChild("Handle") and v.Handle.CanCollide then
                 spawn(function()
@@ -253,10 +254,6 @@ function NewHatdropCallback(character, callback)
         
         -- Wait for hats to settle at safe position
         task.wait(0.5)
-        
-        -- NOW restore FallenPartsDestroyHeight
-        workspace.FallenPartsDestroyHeight = fph
-        log("Restored FallenPartsDestroyHeight")
         
         -- Collect and align hats
         local foundmeshids = {}
@@ -296,8 +293,6 @@ function NewHatdropCallback(character, callback)
         callback(hatstoalign)
     else
         log("========== FAILED TO DROP HATS ==========")
-        workspace.FallenPartsDestroyHeight = fph
-        log("Restored FallenPartsDestroyHeight")
     end
 end
 
@@ -397,10 +392,11 @@ NewHatdropCallback(Player.Character, function(allhats)
     log("========== HAT ALIGNMENT COMPLETE ==========")
 end)
 
--- Handle character respawning
+-- Handle character respawning - AUTOMATICALLY REDO HATDROP
 getgenv().conn = Player.CharacterAdded:Connect(function(Character)
-    log("Character respawned! Starting hat drop...")
+    log("Character respawned! Waiting before starting hat drop...")
     wait(0.5)
+    
     NewHatdropCallback(Character, function(allhats)
         log("RESPAWN CALLBACK RECEIVED with "..tostring(#allhats).." hats")
         for i,v in pairs(allhats) do
