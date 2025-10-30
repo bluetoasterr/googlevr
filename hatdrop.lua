@@ -96,6 +96,10 @@ function NewHatdropCallback(character, callback)
     local hrp = character:WaitForChild("HumanoidRootPart")
     local torso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
     
+    -- BLOCK RESPAWN RIGHT BEFORE WE START THE DROP PROCESS
+    print("Blocking respawn signal NOW...")
+    local blockedSignal = replicatesignal(game.Players.LocalPlayer.ConnectDiedSignalBackend)
+    
     local function updatestate(hat,state)
         print("Updating hat state:", hat.Name, "to state:", state)
         if sethiddenproperty then
@@ -242,6 +246,8 @@ function NewHatdropCallback(character, callback)
         callback(hatstoalign)
     else
         print("========== FAILED TO DROP HATS ==========")
+        print("Unblocking respawn signal...")
+        blockedSignal:Disconnect()
     end
     
     workspace.FallenPartsDestroyHeight = fph
@@ -324,11 +330,7 @@ getgenv().con2 = game:GetService("RunService").RenderStepped:connect(function()
     end
 end)
 
--- PERMADEATH BYPASS + HAT DROP
-print("Blocking respawn signal...")
-local blockedSignal = replicatesignal(game.Players.LocalPlayer.ConnectDiedSignalBackend)
-print("Waiting for respawn time...")
-wait(game.Players.RespawnTime - 0.3)
+-- Execute hat drop on initial character
 print("Executing hat drop on initial character...")
 
 NewHatdropCallback(Player.Character, function(allhats)
