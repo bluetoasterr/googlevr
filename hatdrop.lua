@@ -134,7 +134,7 @@ function NewHatdropCallback(character, callback)
                 hat.BackendAccoutrementState = state
             end)
             if not success then
-                print("ERROR: executor not supported!")
+                log("ERROR: executor not supported!")
                 error("executor not supported, sorry!")
             end
         end
@@ -144,10 +144,10 @@ function NewHatdropCallback(character, callback)
     for i,v in pairs(character:GetChildren()) do
         if v:IsA("Accessory") then
             table.insert(allhats,v)
-            print("Found hat:", v.Name)
+            log("Found hat: "..v.Name)
         end
     end
-    print("Total hats found:", #allhats)
+    log("Total hats found: "..tostring(#allhats))
     
     local locks = {}
     for i,v in pairs(allhats) do
@@ -175,7 +175,7 @@ function NewHatdropCallback(character, callback)
     
     local r6fall = 180436148
     local r15fall = 507767968
-    local dropcf = CFrame.new(character.HumanoidRootPart.Position.x,fph-.25,character.HumanoidRootPart.Position.z)
+    local dropcf = CFrame.new(hrp.Position.x,fph-.25,hrp.Position.z)
     
     if character.Humanoid.RigType == Enum.HumanoidRigType.R15 then
         log("Character is R15")
@@ -265,9 +265,40 @@ function NewHatdropCallback(character, callback)
         for i,v in pairs(character:GetChildren()) do
             if not v:IsA"Accessory" then continue end
             if not v:FindFirstChild("Handle") then continue end
-    
-    workspace.FallenPartsDestroyHeight = fph
-    log("Restored FallenPartsDestroyHeight")
+            local mesh = v.Handle:FindFirstChildOfClass("SpecialMesh")
+            if not mesh then 
+                log("WARNING: Hat "..v.Name.." has no SpecialMesh!")
+                continue 
+            end
+            
+            local is,d = findMeshID(filterMeshID(mesh.MeshId))
+            if foundmeshids["meshid:"..filterMeshID(mesh.MeshId)] then 
+                is = false 
+            else 
+                foundmeshids["meshid:"..filterMeshID(mesh.MeshId)] = true 
+            end
+        
+            if is then
+                log("Adding hat to align list: "..v.Name.." -> "..d)
+                table.insert(hatstoalign,{v,d,"meshid:"..filterMeshID(mesh.MeshId)})
+            else
+                local is,d = findHatName(v.Name)
+                if not is then 
+                    log("WARNING: Hat not found in config: "..v.Name)
+                    continue 
+                end
+                log("Adding hat to align list: "..v.Name.." -> "..d)
+                table.insert(hatstoalign,{v,d,v.Name})
+            end
+        end
+        
+        log("Total hats to align: "..tostring(#hatstoalign))
+        callback(hatstoalign)
+    else
+        log("========== FAILED TO DROP HATS ==========")
+        workspace.FallenPartsDestroyHeight = fph
+        log("Restored FallenPartsDestroyHeight")
+    end
 end
 
 local cam = workspace.CurrentCamera
@@ -364,6 +395,28 @@ NewHatdropCallback(Player.Character, function(allhats)
         end
     end
     log("========== HAT ALIGNMENT COMPLETE ==========")
+end)
+
+-- Handle character respawning
+getgenv().conn = Player.CharacterAdded:Connect(function(Character)
+    log("Character respawned! Starting hat drop...")
+    wait(0.5)
+    NewHatdropCallback(Character, function(allhats)
+        log("RESPAWN CALLBACK RECEIVED with "..tostring(#allhats).." hats")
+        for i,v in pairs(allhats) do
+            if not v[1]:FindFirstChild("Handle") then continue end
+            if v[2]=="headhats" then 
+                v[1].Handle.Transparency = options.HeadHatTransparency or 1 
+            end
+
+            log("Aligning hat: "..v[1].Name.." to part: "..v[2])
+            local align = Align(v[1].Handle,parts[v[2]],((v[2]=="headhats")and getgenv()[v[2]][(v[3])]) or CFrame.identity)
+            if v[2]=="right" then
+                rightarmalign = align
+            end
+        end
+        log("========== HAT ALIGNMENT COMPLETE ==========")
+    end)
 end)
 
 print("\n=== LOG COMMANDS ===")
