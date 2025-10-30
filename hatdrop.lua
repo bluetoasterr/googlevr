@@ -87,34 +87,48 @@ function Align(Part1,Part0,cf,isflingpart)
     return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
 end
 
--- NEW HATDROP METHOD
+-- NEW HATDROP METHOD WITH DEBUG PRINTS
 function NewHatdropCallback(character, callback)
+    print("========== HAT DROP STARTING ==========")
     local fph = workspace.FallenPartsDestroyHeight
-    local hrp = character:WaitForChild("HumanoidRootPart")
-    local torso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
-    local start = hrp.CFrame
+    print("Original FallenPartsDestroyHeight:", fph)
     
-    -- CREATE CAMPART (THIS WAS MISSING!)
+    local hrp = character:WaitForChild("HumanoidRootPart")
+    print("Got HumanoidRootPart:", hrp)
+    
+    local torso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
+    print("Got Torso:", torso)
+    
+    local start = hrp.CFrame
+    print("Start CFrame:", start)
+    
+    -- CREATE CAMPART
     local campart = Instance.new("Part",character)
     campart.Transparency = 1
     campart.CanCollide = false
     campart.Size = Vector3.one
     campart.Position = start.Position
     campart.Anchored = true
+    print("Created campart at:", campart.Position)
     
     local function updatestate(hat,state)
+        print("Updating hat state:", hat.Name, "to state:", state)
         if sethiddenproperty then
             sethiddenproperty(hat,"BackendAccoutrementState",state)
+            print("Used sethiddenproperty")
         elseif setscriptable then
             setscriptable(hat,"BackendAccoutrementState",true)
             hat.BackendAccoutrementState = state
+            print("Used setscriptable")
         else
             local success = pcall(function()
                 hat.BackendAccoutrementState = state
             end)
             if not success then
+                print("ERROR: executor not supported!")
                 error("executor not supported, sorry!")
             end
+            print("Used direct property set")
         end
     end
     
@@ -122,20 +136,25 @@ function NewHatdropCallback(character, callback)
     for i,v in pairs(character:GetChildren()) do
         if v:IsA("Accessory") then
             table.insert(allhats,v)
+            print("Found hat:", v.Name)
         end
     end
+    print("Total hats found:", #allhats)
     
     local locks = {}
     for i,v in pairs(allhats) do
         table.insert(locks,v.Changed:Connect(function(p)
             if p == "BackendAccoutrementState" then
+                print("Hat state changed detected, resetting:", v.Name)
                 updatestate(v,0)
             end
         end))
         updatestate(v,2)
     end
+    print("All hat states set to 2 (Removing)")
     
     workspace.FallenPartsDestroyHeight = 0/0
+    print("Set FallenPartsDestroyHeight to 0/0")
     
     local function play(id,speed,prio,weight)
         local Anim = Instance.new("Animation")
@@ -145,112 +164,167 @@ function NewHatdropCallback(character, callback)
         track:Play()
         track:AdjustSpeed(speed)
         track:AdjustWeight(weight)
+        print("Playing animation:", id, "with speed:", speed)
         return track
     end
     
     local r6fall = 180436148
     local r15fall = 507767968
     local dropcf = CFrame.new(hrp.Position.x,fph-.25,hrp.Position.z)
+    print("Drop CFrame Y position:", fph-.25)
     
     if character.Humanoid.RigType == Enum.HumanoidRigType.R15 then
+        print("Character is R15")
         dropcf = dropcf * CFrame.Angles(math.rad(20),0,0)
         character.Humanoid:ChangeState(16)
         play(r15fall,1,5,1).TimePosition = .1
     else
+        print("Character is R6")
         play(r6fall,1,5,1).TimePosition = .1
     end
     
     spawn(function()
+        print("Starting HRP movement loop")
+        local loopcount = 0
         while hrp.Parent ~= nil do
             hrp.CFrame = dropcf
             hrp.Velocity = Vector3.new(0,25,0)
             hrp.RotVelocity = Vector3.new(0,0,0)
+            loopcount = loopcount + 1
+            if loopcount % 30 == 0 then
+                print("HRP loop still running, count:", loopcount)
+            end
             game:GetService("RunService").Heartbeat:wait()
         end
+        print("HRP loop ended, hrp.Parent is nil")
     end)
     
     task.wait(.25)
+    print("Waited 0.25 seconds")
+    
     character.Humanoid:ChangeState(15)
+    print("Changed humanoid state to 15 (Dead)")
+    
+    print("Waiting for torso to be removed...")
     torso.AncestryChanged:wait()
+    print("Torso removed from character!")
     
     for i,v in pairs(locks) do
         v:Disconnect()
     end
+    print("Disconnected all hat state locks")
+    
     for i,v in pairs(allhats) do
         updatestate(v,4)
     end
+    print("Set all hat states to 4 (Dropped)")
     
     spawn(function()
+        print("Waiting for character respawn...")
         Player.CharacterAdded:wait():WaitForChild("HumanoidRootPart",10).CFrame = start
         workspace.FallenPartsDestroyHeight = fph
+        print("Character respawned and moved back to start position")
     end)
     
     local dropped = false
+    print("Checking if hats dropped...")
+    local checkcount = 0
     repeat
+        checkcount = checkcount + 1
+        if checkcount % 10 == 0 then
+            print("Still checking for dropped hats, check #", checkcount)
+        end
+        
         local foundhandle = false
         for i,v in pairs(allhats) do
             if v:FindFirstChild("Handle") then
                 foundhandle = true
+                print("Hat", v.Name, "Handle.CanCollide:", v.Handle.CanCollide)
                 if v.Handle.CanCollide then
                     dropped = true
+                    print("SUCCESS! Hat dropped with CanCollide = true:", v.Name)
                     break
                 end
             end
         end
         if not foundhandle then
+            print("ERROR: No handles found in any hats!")
             break
         end
         task.wait()
     until Player.Character ~= character or dropped
     
     if dropped then
-        print("dropped")
-        -- THIS LINE WAS MISSING - IT'S CRITICAL!
+        print("========== HATS DROPPED SUCCESSFULLY ==========")
+        -- SET CAMERA TO CAMPART
         workspace.CurrentCamera.CameraSubject = campart
+        print("Set camera subject to campart")
+        
         for i,v in pairs(character:GetChildren()) do
             if v:IsA("Accessory") and v:FindFirstChild("Handle") and v.Handle.CanCollide then
+                print("Moving dropped hat:", v.Name)
                 spawn(function()
                     for i = 1,10 do
                         v.Handle.CFrame = start
                         v.Handle.Velocity = Vector3.new(0,50,0)
                         task.wait()
                     end
+                    print("Finished moving hat:", v.Name)
                 end)
             end
         end
         
         -- Wait for hats to settle
+        print("Waiting 0.5s for hats to settle...")
         task.wait(0.5)
         
         -- Collect and align hats
+        print("Collecting hats to align...")
         local foundmeshids = {}
         local hatstoalign = {}
         
         for i,v in pairs(character:GetChildren()) do
             if not v:IsA"Accessory" then continue end
-            if not v:FindFirstChild("Handle") then continue end
+            if not v:FindFirstChild("Handle") then 
+                print("Hat has no handle:", v.Name)
+                continue 
+            end
             local mesh = v.Handle:FindFirstChildOfClass("SpecialMesh")
-            if not mesh then continue end
+            if not mesh then 
+                print("Hat has no mesh:", v.Name)
+                continue 
+            end
             
-            local is,d = findMeshID(filterMeshID(mesh.MeshId))
-            if foundmeshids["meshid:"..filterMeshID(mesh.MeshId)] then 
+            local meshid = filterMeshID(mesh.MeshId)
+            print("Checking hat:", v.Name, "MeshID:", meshid)
+            
+            local is,d = findMeshID(meshid)
+            if foundmeshids["meshid:"..meshid] then 
+                print("MeshID already used:", meshid)
                 is = false 
             else 
-                foundmeshids["meshid:"..filterMeshID(mesh.MeshId)] = true 
+                foundmeshids["meshid:"..meshid] = true 
             end
         
             if is then
-                table.insert(hatstoalign,{v,d,"meshid:"..filterMeshID(mesh.MeshId)})
+                print("Adding to align by MeshID:", v.Name, "->", d)
+                table.insert(hatstoalign,{v,d,"meshid:"..meshid})
             else
                 local is,d = findHatName(v.Name)
-                if not is then continue end
+                if not is then 
+                    print("Hat not in config:", v.Name)
+                    continue 
+                end
+                print("Adding to align by Name:", v.Name, "->", d)
                 table.insert(hatstoalign,{v,d,v.Name})
             end
         end
         
+        print("Total hats to align:", #hatstoalign)
         callback(hatstoalign)
     else
-        print("failed to drop")
+        print("========== FAILED TO DROP HATS ==========")
+        print("Character changed or no hats became CanCollide")
     end
 end
 
@@ -331,34 +405,53 @@ getgenv().con2 = game:GetService("RunService").RenderStepped:connect(function()
 end)
 
 -- Execute the new hatdrop method on current character
+print("Executing hat drop on initial character...")
 NewHatdropCallback(Player.Character, function(allhats)
+    print("CALLBACK RECEIVED with", #allhats, "hats")
     for i,v in pairs(allhats) do
-        if not v[1]:FindFirstChild("Handle") then continue end
+        if not v[1]:FindFirstChild("Handle") then 
+            print("Skipping hat (no handle):", v[1].Name)
+            continue 
+        end
         if v[2]=="headhats" then 
             v[1].Handle.Transparency = options.HeadHatTransparency or 1 
+            print("Set head hat transparency:", v[1].Name)
         end
 
+        print("Aligning hat:", v[1].Name, "to part:", v[2])
         local align = Align(v[1].Handle,parts[v[2]],((v[2]=="headhats")and getgenv()[v[2]][(v[3])]) or CFrame.identity)
         if v[2]=="right" then
             rightarmalign = align
+            print("Set rightarmalign for hat:", v[1].Name)
         end
     end
+    print("========== HAT ALIGNMENT COMPLETE ==========")
 end)
 
 -- Handle character respawning
 getgenv().conn = Player.CharacterAdded:Connect(function(Character)
-    wait(0.5) -- Wait for character to fully load
+    print("Character respawned, waiting 0.5s...")
+    wait(0.5)
+    print("Executing hat drop on respawned character...")
     NewHatdropCallback(Character, function(allhats)
+        print("RESPAWN CALLBACK RECEIVED with", #allhats, "hats")
         for i,v in pairs(allhats) do
-            if not v[1]:FindFirstChild("Handle") then continue end
+            if not v[1]:FindFirstChild("Handle") then 
+                print("Skipping hat (no handle):", v[1].Name)
+                continue 
+            end
             if v[2]=="headhats" then 
                 v[1].Handle.Transparency = options.HeadHatTransparency or 1 
+                print("Set head hat transparency:", v[1].Name)
             end
 
+            print("Aligning hat:", v[1].Name, "to part:", v[2])
             local align = Align(v[1].Handle,parts[v[2]],((v[2]=="headhats")and getgenv()[v[2]][(v[3])]) or CFrame.identity)
             if v[2]=="right" then
                 rightarmalign = align
+                print("Set rightarmalign for hat:", v[1].Name)
             end
         end
+        print("========== RESPAWN HAT ALIGNMENT COMPLETE ==========")
     end)
 end)
