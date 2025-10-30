@@ -94,6 +94,14 @@ function NewHatdropCallback(character, callback)
     local torso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
     local start = hrp.CFrame
     
+    -- CREATE CAMPART (THIS WAS MISSING!)
+    local campart = Instance.new("Part",character)
+    campart.Transparency = 1
+    campart.CanCollide = false
+    campart.Size = Vector3.one
+    campart.Position = start.Position
+    campart.Anchored = true
+    
     local function updatestate(hat,state)
         if sethiddenproperty then
             sethiddenproperty(hat,"BackendAccoutrementState",state)
@@ -197,6 +205,8 @@ function NewHatdropCallback(character, callback)
     
     if dropped then
         print("dropped")
+        -- THIS LINE WAS MISSING - IT'S CRITICAL!
+        workspace.CurrentCamera.CameraSubject = campart
         for i,v in pairs(character:GetChildren()) do
             if v:IsA("Accessory") and v:FindFirstChild("Handle") and v.Handle.CanCollide then
                 spawn(function()
