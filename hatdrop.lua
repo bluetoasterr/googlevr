@@ -87,7 +87,7 @@ function Align(Part1,Part0,cf,isflingpart)
     return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
 end
 
--- BAREBONES HATDROP WITH PERMADEATH BYPASS
+-- BAREBONES HATDROP
 function NewHatdropCallback(character, callback)
     print("========== HAT DROP STARTING ==========")
     local fph = workspace.FallenPartsDestroyHeight
@@ -95,10 +95,7 @@ function NewHatdropCallback(character, callback)
     
     local hrp = character:WaitForChild("HumanoidRootPart")
     local torso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
-    
-    -- BLOCK RESPAWN RIGHT BEFORE WE START THE DROP PROCESS
-    print("Blocking respawn signal NOW...")
-    local blockedSignal = replicatesignal(game.Players.LocalPlayer.ConnectDiedSignalBackend)
+    local start = hrp.CFrame
     
     local function updatestate(hat,state)
         print("Updating hat state:", hat.Name, "to state:", state)
