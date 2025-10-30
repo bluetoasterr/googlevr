@@ -3,6 +3,24 @@ local input = game:GetService("UserInputService")
 local Player = game.Players.LocalPlayer
 local options = getgenv().options
 
+-- LOG SYSTEM
+local logs = {}
+local function log(msg)
+    print(msg)
+    table.insert(logs, msg)
+end
+
+-- Copy logs to clipboard function
+getgenv().copylogs = function()
+    local logstring = table.concat(logs, "\n")
+    setclipboard(logstring)
+    print("Logs copied to clipboard!")
+end
+getgenv().clearlogs = function()
+    logs = {}
+    print("Logs cleared!")
+end
+
 local function createpart(size, name,h)
 	local Part = Instance.new("Part")
 	if h and options.outlinesEnabled then 
@@ -89,16 +107,16 @@ end
 
 -- BAREBONES HATDROP
 function NewHatdropCallback(character, callback)
-    print("========== HAT DROP STARTING ==========")
+    log("========== HAT DROP STARTING ==========")
     local fph = workspace.FallenPartsDestroyHeight
-    print("Original FallenPartsDestroyHeight:", fph)
+    log("Original FallenPartsDestroyHeight: "..tostring(fph))
     
     local hrp = character:WaitForChild("HumanoidRootPart")
     local torso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
     local start = hrp.CFrame
     
     local function updatestate(hat,state)
-        print("Updating hat state:", hat.Name, "to state:", state)
+        log("Updating hat state: "..hat.Name.." to state: "..tostring(state))
         if sethiddenproperty then
             sethiddenproperty(hat,"BackendAccoutrementState",state)
         elseif setscriptable then
@@ -135,7 +153,7 @@ function NewHatdropCallback(character, callback)
     end
     
     workspace.FallenPartsDestroyHeight = 0/0
-    print("Set FallenPartsDestroyHeight to 0/0")
+    log("Set FallenPartsDestroyHeight to 0/0")
     
     local function play(id,speed,prio,weight)
         local Anim = Instance.new("Animation")
@@ -153,31 +171,31 @@ function NewHatdropCallback(character, callback)
     local dropcf = CFrame.new(character.HumanoidRootPart.Position.x,fph-.25,character.HumanoidRootPart.Position.z)
     
     if character.Humanoid.RigType == Enum.HumanoidRigType.R15 then
-        print("Character is R15")
+        log("Character is R15")
         dropcf = dropcf * CFrame.Angles(math.rad(20),0,0)
         character.Humanoid:ChangeState(16)
         play(r15fall,1,5,1).TimePosition = .1
     else
-        print("Character is R6")
+        log("Character is R6")
         play(r6fall,1,5,1).TimePosition = .1
     end
     
     spawn(function()
-        print("Starting HRP movement loop")
+        log("Starting HRP movement loop")
         while hrp.Parent ~= nil do
             hrp.CFrame = dropcf
             hrp.Velocity = Vector3.new(0,25,0)
             hrp.RotVelocity = Vector3.new(0,0,0)
             game:GetService("RunService").Heartbeat:wait()
         end
-        print("HRP loop ended")
+        log("HRP loop ended")
     end)
     
     task.wait(.25)
-    print("Changed humanoid state to 15 (Dead)")
+    log("Changed humanoid state to 15 (Dead)")
     character.Humanoid:ChangeState(15)
     torso.AncestryChanged:wait()
-    print("Torso removed!")
+    log("Torso removed!")
     
     for i,v in pairs(locks) do
         v:Disconnect()
@@ -185,10 +203,17 @@ function NewHatdropCallback(character, callback)
     for i,v in pairs(allhats) do
         updatestate(v,4)
     end
-    print("Set all hat states to 4 (Dropped)")
+    log("Set all hat states to 4 (Dropped)")
+    
+    spawn(function()
+        log("Waiting for character respawn...")
+        Player.CharacterAdded:wait():WaitForChild("HumanoidRootPart",10).CFrame = start
+        workspace.FallenPartsDestroyHeight = fph
+        log("Character respawned and moved back to start position")
+    end)
     
     local dropped = false
-    print("Checking if hats dropped...")
+    log("Checking if hats dropped...")
     repeat
         local foundhandle = false
         for i,v in pairs(allhats) do
@@ -196,20 +221,20 @@ function NewHatdropCallback(character, callback)
                 foundhandle = true
                 if v.Handle.CanCollide then
                     dropped = true
-                    print("SUCCESS! Hat dropped:", v.Name)
+                    log("SUCCESS! Hat dropped: "..v.Name)
                     break
                 end
             end
         end
         if not foundhandle then
-            print("ERROR: No handles found!")
+            log("ERROR: No handles found!")
             break
         end
         task.wait()
     until Player.Character ~= character or dropped
     
     if dropped then
-        print("========== HATS DROPPED SUCCESSFULLY ==========")
+        log("========== HATS DROPPED SUCCESSFULLY ==========")
         -- Collect and align hats
         local foundmeshids = {}
         local hatstoalign = {}
@@ -229,26 +254,24 @@ function NewHatdropCallback(character, callback)
             end
         
             if is then
-                print("Adding to align by MeshID:", v.Name, "->", d)
+                log("Adding to align by MeshID: "..v.Name.." -> "..d)
                 table.insert(hatstoalign,{v,d,"meshid:"..meshid})
             else
                 local is,d = findHatName(v.Name)
                 if not is then continue end
-                print("Adding to align by Name:", v.Name, "->", d)
+                log("Adding to align by Name: "..v.Name.." -> "..d)
                 table.insert(hatstoalign,{v,d,v.Name})
             end
         end
         
-        print("Total hats to align:", #hatstoalign)
+        log("Total hats to align: "..tostring(#hatstoalign))
         callback(hatstoalign)
     else
-        print("========== FAILED TO DROP HATS ==========")
-        print("Unblocking respawn signal...")
-        blockedSignal:Disconnect()
+        log("========== FAILED TO DROP HATS ==========")
     end
     
     workspace.FallenPartsDestroyHeight = fph
-    print("Restored FallenPartsDestroyHeight")
+    log("Restored FallenPartsDestroyHeight")
 end
 
 local cam = workspace.CurrentCamera
@@ -328,21 +351,49 @@ getgenv().con2 = game:GetService("RunService").RenderStepped:connect(function()
 end)
 
 -- Execute hat drop on initial character
-print("Executing hat drop on initial character...")
+log("Executing hat drop on initial character...")
 
 NewHatdropCallback(Player.Character, function(allhats)
-    print("CALLBACK RECEIVED with", #allhats, "hats")
+    log("CALLBACK RECEIVED with "..tostring(#allhats).." hats")
     for i,v in pairs(allhats) do
         if not v[1]:FindFirstChild("Handle") then continue end
         if v[2]=="headhats" then 
             v[1].Handle.Transparency = options.HeadHatTransparency or 1 
         end
 
-        print("Aligning hat:", v[1].Name, "to part:", v[2])
+        log("Aligning hat: "..v[1].Name.." to part: "..v[2])
         local align = Align(v[1].Handle,parts[v[2]],((v[2]=="headhats")and getgenv()[v[2]][(v[3])]) or CFrame.identity)
         if v[2]=="right" then
             rightarmalign = align
         end
     end
-    print("========== HAT ALIGNMENT COMPLETE ==========")
+    log("========== HAT ALIGNMENT COMPLETE ==========")
 end)
+
+-- Auto redo hat drop on respawn
+getgenv().conn = Player.CharacterAdded:Connect(function(Character)
+    log("Character respawned, waiting 0.5s...")
+    wait(0.5)
+    log("Executing hat drop on respawned character...")
+    NewHatdropCallback(Character, function(allhats)
+        log("RESPAWN CALLBACK RECEIVED with "..tostring(#allhats).." hats")
+        for i,v in pairs(allhats) do
+            if not v[1]:FindFirstChild("Handle") then continue end
+            if v[2]=="headhats" then 
+                v[1].Handle.Transparency = options.HeadHatTransparency or 1 
+            end
+
+            log("Aligning hat: "..v[1].Name.." to part: "..v[2])
+            local align = Align(v[1].Handle,parts[v[2]],((v[2]=="headhats")and getgenv()[v[2]][(v[3])]) or CFrame.identity)
+            if v[2]=="right" then
+                rightarmalign = align
+            end
+        end
+        log("========== RESPAWN HAT ALIGNMENT COMPLETE ==========")
+    end)
+end)
+
+print("\n=== LOG COMMANDS ===")
+print("Type: copylogs() to copy all logs to clipboard")
+print("Type: clearlogs() to clear all logs")
+print("====================\n")
