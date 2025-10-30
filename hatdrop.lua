@@ -108,6 +108,13 @@ end
 -- BAREBONES HATDROP
 function NewHatdropCallback(character, callback)
     log("========== HAT DROP STARTING ==========")
+    
+    -- BLOCK RESPAWN FOR PERMADEATH
+    log("Blocking respawn signal...")
+    local blockedSignal = replicatesignal(game.Players.LocalPlayer.ConnectDiedSignalBackend)
+    log("Waiting for respawn time...")
+    wait(game.Players.RespawnTime - 0.3)
+    
     local fph = workspace.FallenPartsDestroyHeight
     log("Original FallenPartsDestroyHeight: "..tostring(fph))
     
@@ -168,7 +175,7 @@ function NewHatdropCallback(character, callback)
     
     local r6fall = 180436148
     local r15fall = 507767968
-    local dropcf = CFrame.new(character.HumanoidRootPart.Position.x,fph+50,character.HumanoidRootPart.Position.z)
+    local dropcf = CFrame.new(character.HumanoidRootPart.Position.x,fph-.25,character.HumanoidRootPart.Position.z)
     
     if character.Humanoid.RigType == Enum.HumanoidRigType.R15 then
         log("Character is R15")
@@ -234,9 +241,9 @@ function NewHatdropCallback(character, callback)
         for i,v in pairs(character:GetChildren()) do
             if v:IsA("Accessory") and v:FindFirstChild("Handle") and v.Handle.CanCollide then
                 spawn(function()
-                    for i = 1,15 do
+                    for i = 1,10 do
                         v.Handle.CFrame = start
-                        v.Handle.Velocity = Vector3.new(0,100,0)
+                        v.Handle.Velocity = Vector3.new(0,50,0)
                         task.wait()
                     end
                     log("Moved hat up: "..v.Name)
@@ -245,7 +252,7 @@ function NewHatdropCallback(character, callback)
         end
         
         -- Wait for hats to settle at safe position
-        task.wait(0.75)
+        task.wait(0.5)
         
         -- NOW restore FallenPartsDestroyHeight
         workspace.FallenPartsDestroyHeight = fph
@@ -357,29 +364,6 @@ NewHatdropCallback(Player.Character, function(allhats)
         end
     end
     log("========== HAT ALIGNMENT COMPLETE ==========")
-end)
-
--- Auto redo hat drop on respawn
-getgenv().conn = Player.CharacterAdded:Connect(function(Character)
-    log("Character respawned, waiting 0.5s...")
-    wait(0.5)
-    log("Executing hat drop on respawned character...")
-    NewHatdropCallback(Character, function(allhats)
-        log("RESPAWN CALLBACK RECEIVED with "..tostring(#allhats).." hats")
-        for i,v in pairs(allhats) do
-            if not v[1]:FindFirstChild("Handle") then continue end
-            if v[2]=="headhats" then 
-                v[1].Handle.Transparency = options.HeadHatTransparency or 1 
-            end
-
-            log("Aligning hat: "..v[1].Name.." to part: "..v[2])
-            local align = Align(v[1].Handle,parts[v[2]],((v[2]=="headhats")and getgenv()[v[2]][(v[3])]) or CFrame.identity)
-            if v[2]=="right" then
-                rightarmalign = align
-            end
-        end
-        log("========== RESPAWN HAT ALIGNMENT COMPLETE ==========")
-    end)
 end)
 
 print("\n=== LOG COMMANDS ===")
