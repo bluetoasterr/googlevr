@@ -205,13 +205,6 @@ function NewHatdropCallback(character, callback)
     end
     log("Set all hat states to 4 (Dropped)")
     
-    spawn(function()
-        log("Waiting for character respawn...")
-        Player.CharacterAdded:wait():WaitForChild("HumanoidRootPart",10).CFrame = start
-        workspace.FallenPartsDestroyHeight = fph
-        log("Character respawned and moved back to start position")
-    end)
-    
     local dropped = false
     log("Checking if hats dropped...")
     repeat
@@ -235,6 +228,29 @@ function NewHatdropCallback(character, callback)
     
     if dropped then
         log("========== HATS DROPPED SUCCESSFULLY ==========")
+        
+        -- IMMEDIATELY move hats UP to prevent deletion
+        log("Moving hats up to prevent deletion...")
+        for i,v in pairs(character:GetChildren()) do
+            if v:IsA("Accessory") and v:FindFirstChild("Handle") and v.Handle.CanCollide then
+                spawn(function()
+                    for i = 1,10 do
+                        v.Handle.CFrame = start
+                        v.Handle.Velocity = Vector3.new(0,50,0)
+                        task.wait()
+                    end
+                    log("Moved hat up: "..v.Name)
+                end)
+            end
+        end
+        
+        -- Wait for hats to settle at safe position
+        task.wait(0.5)
+        
+        -- NOW restore FallenPartsDestroyHeight
+        workspace.FallenPartsDestroyHeight = fph
+        log("Restored FallenPartsDestroyHeight")
+        
         -- Collect and align hats
         local foundmeshids = {}
         local hatstoalign = {}
@@ -242,33 +258,6 @@ function NewHatdropCallback(character, callback)
         for i,v in pairs(character:GetChildren()) do
             if not v:IsA"Accessory" then continue end
             if not v:FindFirstChild("Handle") then continue end
-            local mesh = v.Handle:FindFirstChildOfClass("SpecialMesh")
-            if not mesh then continue end
-            
-            local meshid = filterMeshID(mesh.MeshId)
-            local is,d = findMeshID(meshid)
-            if foundmeshids["meshid:"..meshid] then 
-                is = false 
-            else 
-                foundmeshids["meshid:"..meshid] = true 
-            end
-        
-            if is then
-                log("Adding to align by MeshID: "..v.Name.." -> "..d)
-                table.insert(hatstoalign,{v,d,"meshid:"..meshid})
-            else
-                local is,d = findHatName(v.Name)
-                if not is then continue end
-                log("Adding to align by Name: "..v.Name.." -> "..d)
-                table.insert(hatstoalign,{v,d,v.Name})
-            end
-        end
-        
-        log("Total hats to align: "..tostring(#hatstoalign))
-        callback(hatstoalign)
-    else
-        log("========== FAILED TO DROP HATS ==========")
-    end
     
     workspace.FallenPartsDestroyHeight = fph
     log("Restored FallenPartsDestroyHeight")
