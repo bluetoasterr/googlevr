@@ -237,25 +237,7 @@ function NewHatdropCallback(character, callback)
     if dropped then
         log("========== HATS DROPPED SUCCESSFULLY ==========")
         
-        -- Move hats up to start position
-        log("Moving hats to start position...")
-        for i,v in pairs(character:GetChildren()) do
-            if v:IsA("Accessory") and v:FindFirstChild("Handle") and v.Handle.CanCollide then
-                spawn(function()
-                    for i = 1,10 do
-                        v.Handle.CFrame = start
-                        v.Handle.Velocity = Vector3.new(0,50,0)
-                        task.wait()
-                    end
-                    log("Moved hat up: "..v.Name)
-                end)
-            end
-        end
-        
-        -- Wait for hats to settle at safe position
-        task.wait(0.5)
-        
-        -- Collect and align hats
+        -- Collect hats IMMEDIATELY (before moving them)
         local foundmeshids = {}
         local hatstoalign = {}
         
@@ -290,7 +272,13 @@ function NewHatdropCallback(character, callback)
         end
         
         log("Total hats to align: "..tostring(#hatstoalign))
+        
+        -- START ALIGNMENT IMMEDIATELY - this will take control of the hats
         callback(hatstoalign)
+        
+        -- THEN move them up (the alignment system will take over instantly)
+        log("Hats are now being controlled by alignment system")
+        
     else
         log("========== FAILED TO DROP HATS ==========")
     end
