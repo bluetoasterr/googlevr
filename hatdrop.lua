@@ -168,7 +168,7 @@ function NewHatdropCallback(character, callback)
     
     local r6fall = 180436148
     local r15fall = 507767968
-    local dropcf = CFrame.new(character.HumanoidRootPart.Position.x,fph-.25,character.HumanoidRootPart.Position.z)
+    local dropcf = CFrame.new(character.HumanoidRootPart.Position.x,fph+50,character.HumanoidRootPart.Position.z)
     
     if character.Humanoid.RigType == Enum.HumanoidRigType.R15 then
         log("Character is R15")
@@ -234,9 +234,9 @@ function NewHatdropCallback(character, callback)
         for i,v in pairs(character:GetChildren()) do
             if v:IsA("Accessory") and v:FindFirstChild("Handle") and v.Handle.CanCollide then
                 spawn(function()
-                    for i = 1,10 do
+                    for i = 1,15 do
                         v.Handle.CFrame = start
-                        v.Handle.Velocity = Vector3.new(0,50,0)
+                        v.Handle.Velocity = Vector3.new(0,100,0)
                         task.wait()
                     end
                     log("Moved hat up: "..v.Name)
@@ -245,7 +245,7 @@ function NewHatdropCallback(character, callback)
         end
         
         -- Wait for hats to settle at safe position
-        task.wait(0.5)
+        task.wait(0.75)
         
         -- NOW restore FallenPartsDestroyHeight
         workspace.FallenPartsDestroyHeight = fph
