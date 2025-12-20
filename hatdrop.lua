@@ -87,41 +87,41 @@ function Align(Part1,Part0,cf,isflingpart)
     return {SetVelocity = function(self,v) velocity=v end,SetCFrame = function(self,v) cf=v end,}
 end
 
--- NEW HATDROP METHOD - DROP ALL ACCESSORIES IN R6 AND R15 BY ShownApe#7272
+
 function NewHatdropCallback(Character, callback)
     local block = false -- Set to true if you want to remove meshes
     local character = Character
     
-    -- Store original character reference and reset it
+  
     game.Players.LocalPlayer.Character = nil
     game.Players.LocalPlayer.Character = character
     wait(game.Players.RespawnTime + 0.05)
     
-    -- Disable death state
+
     if character:FindFirstChildOfClass("Humanoid") then
         character:FindFirstChildOfClass("Humanoid"):SetStateEnabled(Enum.HumanoidStateType.Dead,false)
     end
     
-    -- Remove torso parts (R6 and R15 compatibility)
+
     for i, v in pairs(character:GetChildren()) do
         if v.Name == "Torso" or v.Name == "UpperTorso" then
             v:Destroy()
         end
     end
     
-    -- Remove HumanoidRootPart
+
     if character:FindFirstChild("HumanoidRootPart") then
         character.HumanoidRootPart:Destroy()
     end
     
-    -- Set accessory backend states
+
     for i,v in pairs(character:GetChildren()) do
         if v:IsA("Accessory") then
-            sethiddenproperty(v,"BackendAccoutrementState", 0) -- 0-3 works, 4 is default in-character state
+            sethiddenproperty(v,"BackendAccoutrementState", 0) 
         end
     end
     
-    -- Optional: Remove meshes if block is true
+  
     if block == true then 
         for i,v in pairs(character:GetDescendants()) do
             if v:IsA("SpecialMesh") then
@@ -130,22 +130,19 @@ function NewHatdropCallback(Character, callback)
         end
     end
     
-    -- Remove all other body parts except Head
+
     for i,v in pairs(character:GetChildren()) do
         if v:IsA("BasePart") and v.Name ~= "Head" then
-            v:Destroy() -- This triggers ChildRemoving event
+            v:Destroy() 
         end
     end
     
-    -- Optional: Remove head (can be removed if needed)
+
     if character:FindFirstChild("Head") then
         character.Head:remove()
     end
-    
-    -- Wait a bit for everything to process
+
     wait(0.1)
-    
-    -- Get all remaining accessories and prepare them for alignment
     local foundmeshids = {}
     local allhats = {}
     
@@ -249,8 +246,6 @@ getgenv().con2 = game:GetService("RunService").RenderStepped:connect(function()
         rightarmalign:SetCFrame(CFrame.new(0,0,0))
     end
 end)
-
--- Execute the new hatdrop method on current character
 NewHatdropCallback(Player.Character, function(allhats)
     for i,v in pairs(allhats) do
         if not v[1]:FindFirstChild("Handle") then continue end
@@ -264,10 +259,8 @@ NewHatdropCallback(Player.Character, function(allhats)
         end
     end
 end)
-
--- Handle character respawning
 getgenv().conn = Player.CharacterAdded:Connect(function(Character)
-    wait(0.5) -- Wait for character to fully load
+    wait(0.5) 
     NewHatdropCallback(Character, function(allhats)
         for i,v in pairs(allhats) do
             if not v[1]:FindFirstChild("Handle") then continue end
