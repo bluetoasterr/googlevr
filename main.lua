@@ -136,7 +136,7 @@ if getgenv().HATDROP and not getgenv().fullbody then
 	return
 end
 if getgenv().fullbody then
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/presidentanvil/skyvr/main/SkyVRFullbody.lua"))()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/bluetoasterr/googlevr/main/fullbody"))()
 	TextLabel.Text = "Ready!"
 	task.delay(5,function()
 		loader:Destroy()
