@@ -15,7 +15,7 @@ getgenv().accoffsets =   {Torso={};LeftArm={getgenv().options.lefthandrotoffset}
 
 local count = 0
 for i,v in pairs(getgenv().headhats) do
-	count+=1
+	count = 1
 	AccessorySettings.Torso[count]=i
 	getgenv().accoffsets.Torso[count]=v
 end
