@@ -1,3 +1,6 @@
+isnetworkowner = isnetworkowner or function(v)
+    return v.ReceiveAge == 0 and not v.NetworkIsSleeping
+end
 local loader = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local ImageLabel = Instance.new("ImageLabel")
