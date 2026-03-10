@@ -25,20 +25,20 @@ local FootPlacementSettings = {
 }
 
 local Script = nil;
-local limbCFs = {}
-getgenv().limbCFs = limbCFs
+getgenv().limbCFs = getgenv().limbCFs or {}
+local limbCFs = getgenv().limbCFs
 local VirtualBody
 local VirtualRig
 local righttoyalign
-
- VRBridge settings
 local STUDS_PER_METER = 20.32
 local HttpService = game:GetService("HttpService")
 local _bridgePacket = nil
 local _bridgeHead = nil
 
+local _requestFn = request or (syn and syn.request) or (http and http.request) or nil
 local function _pollBridge()
-	local ok, res = pcall(request, {
+	if not _requestFn then return end
+	local ok, res = pcall(_requestFn, {
 		Url = "http://127.0.0.1:7777",
 		Method = "GET",
 	})
