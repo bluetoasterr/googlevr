@@ -15,7 +15,7 @@ getgenv().accoffsets =   {Torso={};LeftArm={getgenv().options.lefthandrotoffset}
 
 local count = 0
 for i,v in pairs(getgenv().headhats) do
-	count = 1
+	count+=1
 	AccessorySettings.Torso[count]=i
 	getgenv().accoffsets.Torso[count]=v
 end
@@ -30,6 +30,8 @@ local limbCFs = getgenv().limbCFs
 local VirtualBody
 local VirtualRig
 local righttoyalign
+
+---- VRBridge settings
 local STUDS_PER_METER = 20.32
 local HttpService = game:GetService("HttpService")
 local _bridgePacket = nil
@@ -355,6 +357,8 @@ if VRReady then
 		VirtualBody.Humanoid:Move(-rotatedDirection)
 	end) 
 end
+
+-- VRBridge: poll Driver4VR trackers every heartbeat and override limbCFs
 RunService.Heartbeat:Connect(function()
 	_pollBridge()
 	if not _bridgePacket or not _bridgeHead then return end
@@ -467,6 +471,7 @@ warn("VRReady is", VRReady)
 
 local function OnUserCFrameChanged(UserCFrame, Positioning, IgnoreTorso)
 	Positioning = Camera.CFrame * Positioning
+	-- Only use VirtualRig for torso/legs if VRBridge has no data
 	if not _bridgePacket then
 		limbCFs.Torso = VirtualRig.UpperTorso.CFrame * CFrame.new(0, -0.25, 0) * AccessorySettings.LimbOffset
 		limbCFs.RightLeg = VirtualRig.RightFoot.CFrame * CFrame.new(0, 0.5, 0) * AccessorySettings.LimbOffset
