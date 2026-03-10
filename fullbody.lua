@@ -1,5 +1,6 @@
-if getgenv().HATDROP then loadstring(game:HttpGet("https://raw.githubusercontent.com/presidentanvil/skyvr/main/SkyVRFullbodyHatdrop.lua"))() end
 loadstring(game:HttpGet("https://raw.githubusercontent.com/PresidentAnvil/HatdropReanimation/main/Valuable%20Dependencies/thething.lua"))()
+pcall(function()loader:Destroy()end)
+local fpdh = workspace.FallenPartsDestroyHeight
 local StudsOffset = 0.1
 local ChatEnabled = true
 local ChatLocalRange = 70
@@ -24,45 +25,12 @@ local FootPlacementSettings = {
 	LeftOffset = Vector3.new(-.5, 0, 0),
 }
 
+
 local Script = nil;
-getgenv().limbCFs = getgenv().limbCFs or {}
-local limbCFs = getgenv().limbCFs
+local limbCFs = {}
 local VirtualBody
 local VirtualRig
 local righttoyalign
-
----- VRBridge settings
-local STUDS_PER_METER = 20.32
-local HttpService = game:GetService("HttpService")
-local _bridgePacket = nil
-local _bridgeHead = nil
-
-local _requestFn = request or (syn and syn.request) or (http and http.request) or nil
-local function _pollBridge()
-	if not _requestFn then return end
-	local ok, res = pcall(_requestFn, {
-		Url = "http://127.0.0.1:7777",
-		Method = "GET",
-	})
-	if ok and res and res.StatusCode == 200 and res.Body and #res.Body > 2 then
-		local ok2, data = pcall(HttpService.JSONDecode, HttpService, res.Body)
-		if ok2 then
-			_bridgePacket = data
-			_bridgeHead = data.head
-		end
-	end
-end
-
-local function _trackerCF(t, camCF)
-	if not _bridgeHead then return nil end
-	local dx = (t.px - _bridgeHead.px) * STUDS_PER_METER
-	local dy = (t.py - _bridgeHead.py) * STUDS_PER_METER
-	local dz = (t.pz - _bridgeHead.pz) * STUDS_PER_METER
-	local worldPos = camCF * CFrame.new(dx, dy, dz)
-	local rot = CFrame.Angles(math.rad(t.rx), math.rad(t.ry), math.rad(t.rz))
-	return CFrame.new(worldPos.p) * rot
-end
-
 Script = function()
 
 local Players = game:GetService("Players")
@@ -117,10 +85,13 @@ local CharacterCFrame = WeldBase.CFrame
 function Tween(Object, Style, Direction, Time, Goal)
     local tweenInfo = TweenInfo.new(Time, Enum.EasingStyle[Style], Enum.EasingDirection[Direction])
     local tween = game:GetService("TweenService"):Create(Object, tweenInfo, Goal)
+
 	tween.Completed:Connect(function()
 		tween:Destroy()
 	end)
+	
     tween:Play()
+
     return tween
 end
 
@@ -183,7 +154,9 @@ local function GetGripForHandle(Handle)
 			return Weld
 		end
 	end
+	
 	wait(.2)
+	
 	for _, Weld in next, Character:GetDescendants() do
 		if Weld:IsA("Weld") and (Weld.Part0 == Handle or Weld.Part1 == Handle) then
 			return Weld
@@ -192,6 +165,7 @@ local function GetGripForHandle(Handle)
 end
 
 local function CreateRightGrip(Handle)
+
 end
 
 VirtualRig.Name = "VirtualRig"
@@ -208,11 +182,12 @@ VirtualBody.Name = "VirtualBody"
 VirtualBody.Humanoid.WalkSpeed = 8
 VirtualBody.Humanoid.CameraOffset = Vector3.new(0, StudsOffset, 0)
 VirtualBody:SetPrimaryPartCFrame(CharacterCFrame)
+--
 
 Camera.CameraSubject = VirtualBody.Humanoid
 game:GetService("RunService").PostSimulation:Connect(function()
-	Players.LocalPlayer.CameraMaxZoomDistance = VRReady and 0.1 or 20
-	Players.LocalPlayer.CameraMinZoomDistance = 0.1
+	Players.LocalPlayer.CameraMaxZoomDistance = VRReady and 0 or 20
+	Players.LocalPlayer.CameraMinZoomDistance = 0
 	workspace.CurrentCamera.HeadScale=1
     if workspace.CurrentCamera.CameraSubject == VirtualBody.Humanoid then
 		workspace.CurrentCamera.HeadScale=1
@@ -227,7 +202,7 @@ game:GetService("RunService").PostSimulation:Connect(function()
 	workspace.CurrentCamera.HeadScale=1
 	Camera.CFrame = oldcam
 	Players.LocalPlayer.CameraMaxZoomDistance = VRReady and 0.1 or 20
-	Players.LocalPlayer.CameraMinZoomDistance = 0.1
+	Players.LocalPlayer.CameraMinZoomDistance = 0
 end)
 
 Character.Humanoid.WalkSpeed = 0
@@ -254,6 +229,7 @@ if not VRReady then
 	VirtualRig.LeftUpperArm.ShoulderConstraint.RigidityEnabled = true
 end
 
+
 local LVecPart = Instance.new("Part", workspace) 
 LVecPart.CanCollide = false 
 LVecPart.Transparency = 1
@@ -278,11 +254,17 @@ local function KEYDOWN(_,Processed)
     if HumanDied then CONDOWN:Disconnect(); return end
     if Processed ~= true then
         local Key = _.KeyCode
-        if Key == Enum.KeyCode.W then WDown = true end
-        if Key == Enum.KeyCode.A then ADown = true end
-        if Key == Enum.KeyCode.S then SDown = true end
-        if Key == Enum.KeyCode.D then DDown = true end
-        if Key == Enum.KeyCode.Space then SpaceDown = true end 
+        if Key == Enum.KeyCode.W then
+            WDown = true end
+        if Key == Enum.KeyCode.A then
+            ADown = true end
+        if Key == Enum.KeyCode.S then
+            SDown = true end
+        if Key == Enum.KeyCode.D then
+            DDown = true end
+        if Key == Enum.KeyCode.Space then
+            SpaceDown = true 
+        end 
     end 
 end
 CONDOWN = game:GetService("UserInputService").InputBegan:Connect(KEYDOWN)
@@ -292,11 +274,16 @@ local function KEYUP(_,a)
     if a then return end
     if HumanDied then CONUP:Disconnect(); return end
     local Key = _.KeyCode
-    if Key == Enum.KeyCode.W then WDown = false end
-    if Key == Enum.KeyCode.A then ADown = false end
-    if Key == Enum.KeyCode.S then SDown = false end
-    if Key == Enum.KeyCode.D then DDown = false end
-    if Key == Enum.KeyCode.Space then SpaceDown = false end 
+    if Key == Enum.KeyCode.W then
+        WDown = false end
+    if Key == Enum.KeyCode.A then
+        ADown = false end
+    if Key == Enum.KeyCode.S then
+        SDown = false end
+    if Key == Enum.KeyCode.D then
+        DDown = false end
+    if Key == Enum.KeyCode.Space then
+        SpaceDown = false end 
 end
 CONUP = game:GetService("UserInputService").InputEnded:Connect(KEYUP)
 
@@ -309,7 +296,7 @@ coroutine.wrap(function()
 	if VRReady then return end
     while true do game:GetService("RunService").RenderStepped:Wait()
         if HumanDied then break end
-        if WDown then MoveClone(0,0,1e4) if walka.IsPlaying ~= true then walka:Play() end end
+        if WDown then  MoveClone(0,0,1e4) if walka.IsPlaying ~= true then walka:Play() end end
         if ADown then MoveClone(1e4,0,0) if walka.IsPlaying ~= true then walka:Play() end end
         if SDown then MoveClone(0,0,-1e4) if walka.IsPlaying ~= true then walka:Play() end end
         if DDown then MoveClone(-1e4,0,0) if walka.IsPlaying ~= true then walka:Play() end end
@@ -323,7 +310,7 @@ end)()
 UserInputService.InputChanged:Connect(function(inputObject)
 	if inputObject.KeyCode == Enum.KeyCode.Thumbstick1 then
 		lastjoystickPosition = joystickPosition
-		joystickPosition = inputObject.Position
+	  joystickPosition = inputObject.Position
 	end
 end)
 
@@ -352,30 +339,11 @@ if VRReady then
 		lastjoystickPosition = joystickPosition
 		local headCFrame = limbCFs.Head
 		local joystickDirection = Vector3.new(-joystickPosition.X, 0, joystickPosition.Y)
-		if joystickDirection.Magnitude<=0.6 then VirtualBody.Humanoid:Move(Vector3.zero) return end
+		if joystickDirection.Magnitude<=0.6 then VirtualBody.Humanoid:Move(Vector3.zero)  return end
 		local rotatedDirection = headCFrame:VectorToWorldSpace(joystickDirection)
 		VirtualBody.Humanoid:Move(-rotatedDirection)
 	end) 
 end
-
--- VRBridge: poll Driver4VR trackers every heartbeat and override limbCFs
-RunService.Heartbeat:Connect(function()
-	_pollBridge()
-	if not _bridgePacket or not _bridgeHead then return end
-	local camCF = Camera.CFrame
-	if _bridgePacket.hips then
-		local cf = _trackerCF(_bridgePacket.hips, camCF)
-		if cf then limbCFs.Torso = cf end
-	end
-	if _bridgePacket.lfoot then
-		local cf = _trackerCF(_bridgePacket.lfoot, camCF)
-		if cf then limbCFs.LeftLeg = cf end
-	end
-	if _bridgePacket.rfoot then
-		local cf = _trackerCF(_bridgePacket.rfoot, camCF)
-		if cf then limbCFs.RightLeg = cf end
-	end
-end)
 
 local FootUpdateDebounce = tick()
 
@@ -383,7 +351,9 @@ local function FloorRay(Part, Distance)
 	local Position = Part.CFrame.p
 	local Target = Position - Vector3.new(0, Distance, 0)
 	local Line = Ray.new(Position, (Target - Position).Unit * Distance)
+	
 	local FloorPart, FloorPosition, FloorNormal = workspace:FindPartOnRayWithIgnoreList(Line, {VirtualRig, VirtualBody, Character})
+	
 	if FloorPart then
 		return FloorPart, FloorPosition, FloorNormal, (FloorPosition - Position).Magnitude
 	else
@@ -394,6 +364,7 @@ end
 local function Flatten(CF)
 	local X,Y,Z = CF.X,CF.Y,CF.Z
 	local LX,LZ = CF.lookVector.X,CF.lookVector.Z
+	
 	return CFrame.new(X,Y,Z) * CFrame.Angles(0,math.atan2(LX,LZ),0)
 end
 
@@ -401,25 +372,34 @@ local FootTurn = 1
 
 local function FootReady(Foot, Target)
 	local MaxDist
+	
 	if Character.Humanoid.MoveDirection.Magnitude > 0 then
 		MaxDist = .5
 	else
 		MaxDist = 1
 	end
+	
 	local PastThreshold = (Foot.Position - Target.Position).Magnitude > MaxDist
 	local PastTick = tick() - FootUpdateDebounce >= 2
+	
 	if PastThreshold or PastTick then
 		FootUpdateDebounce = tick()
 	end
-	return PastThreshold or PastTick
+	
+	return
+		PastThreshold
+	or
+		PastTick
 end
 
 local function FootYield()
 	local RightFooting = VirtualRig.RightFoot.BodyPosition
 	local LeftFooting = VirtualRig.LeftFoot.BodyPosition
 	local LowerTorso = VirtualRig.LowerTorso
+	
 	local Timer = 0.15
 	local Yield = tick()
+	
 	repeat
 		RunService.Stepped:Wait()
 		if
@@ -441,23 +421,30 @@ local function UpdateFooting()
 		wait()
 		return
 	end
+	
 	local Floor, FloorPosition, FloorNormal, Dist = FloorRay(VirtualRig.LowerTorso, 3)
+	
 	Dist = math.clamp(Dist, 0, 5)
+	
 	local FootTarget = 
 		VirtualRig.LowerTorso.CFrame *
 		CFrame.new(FootPlacementSettings.RightOffset) -
 		Vector3.new(0, Dist, 0) +
 		Character.Humanoid.MoveDirection * (VirtualBody.Humanoid.WalkSpeed / 8) * 2
+		
 	if FootReady(VirtualRig.RightFoot, FootTarget) then
 		VirtualRig.RightFoot.BodyPosition.Position = FootTarget.p
 		VirtualRig.RightFoot.BodyGyro.CFrame = Flatten(VirtualRig.LowerTorso.CFrame)
 	end
+	
 	FootYield()
+	
 	local FootTarget = 
 		VirtualRig.LowerTorso.CFrame *
 		CFrame.new(FootPlacementSettings.LeftOffset) -
 		Vector3.new(0, Dist, 0) +
 		Character.Humanoid.MoveDirection * (VirtualBody.Humanoid.WalkSpeed / 8) * 2
+	
 	if FootReady(VirtualRig.LeftFoot, FootTarget) then
 		VirtualRig.LeftFoot.BodyPosition.Position = FootTarget.p
 		VirtualRig.LeftFoot.BodyGyro.CFrame = Flatten(VirtualRig.LowerTorso.CFrame)
@@ -465,33 +452,37 @@ local function UpdateFooting()
 end
 
 local function UpdateLegPosition()
+
 end
 
 warn("VRReady is", VRReady)
 
 local function OnUserCFrameChanged(UserCFrame, Positioning, IgnoreTorso)
 	Positioning = Camera.CFrame * Positioning
-	-- Only use VirtualRig for torso/legs if VRBridge has no data
-	if not _bridgePacket then
-		limbCFs.Torso = VirtualRig.UpperTorso.CFrame * CFrame.new(0, -0.25, 0) * AccessorySettings.LimbOffset
-		limbCFs.RightLeg = VirtualRig.RightFoot.CFrame * CFrame.new(0, 0.5, 0) * AccessorySettings.LimbOffset
-		limbCFs.LeftLeg = VirtualRig.LeftLowerLeg.CFrame:Lerp(VirtualRig.LeftFoot.CFrame, 0.5) * CFrame.new(0, 0.5, 0) * AccessorySettings.LimbOffset
-	end
+	limbCFs.Torso = VirtualRig.UpperTorso.CFrame * CFrame.new(0, -0.25, 0) * AccessorySettings.LimbOffset
+	limbCFs.RightLeg = VirtualRig.RightFoot.CFrame * CFrame.new(0, 0.5, 0) * AccessorySettings.LimbOffset
+	limbCFs.LeftLeg = VirtualRig.LeftLowerLeg.CFrame:Lerp(VirtualRig.LeftFoot.CFrame, 0.5)* CFrame.new(0, 0.5, 0) * AccessorySettings.LimbOffset
 	if UserCFrame == Enum.UserCFrame.Head then
 		limbCFs.Head = Positioning
 	elseif UserCFrame == Enum.UserCFrame.RightHand and AccessorySettings.RightArm then
 		walklookvec = Positioning.lookVector
 		local HandPosition = Positioning
 		local LocalPositioning = Positioning
+		
 		if AccurateHandPosition then
 			HandPosition = HandPosition * CFrame.new(0, 0, 1)
 		else
 			HandPosition = HandPosition * CFrame.new(0, 0, .5)
 		end
+		
 		if not VRReady then
 			local HeadRotation = Camera.CFrame - Camera.CFrame.p
+			
 			HandPosition = VirtualRig.RightLowerArm.CFrame * AccessorySettings.LimbOffset
+			
+			--LocalPositioning = (HeadRotation + (HandPosition * CFrame.new(0, 0, 1)).p) * CFrame.Angles(math.rad(-45), 0, 0)
 			LocalPositioning = HandPosition * CFrame.new(0, 0, 1) * CFrame.Angles(math.rad(-180), 0, 0)
+			
 			if Point2 then
 				VirtualRig.RightUpperArm.Aim.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
 				VirtualRig.RightUpperArm.Aim.CFrame = Camera.CFrame * AccessorySettings.LimbOffset
@@ -502,11 +493,14 @@ local function OnUserCFrameChanged(UserCFrame, Positioning, IgnoreTorso)
 		limbCFs.RightArm = HandPosition
 	elseif UserCFrame == Enum.UserCFrame.LeftHand and AccessorySettings.LeftArm then
 		local HandPosition = Positioning
+		
 		if AccurateHandPosition then
 			HandPosition = HandPosition * CFrame.new(0, 0, 1)
 		end
+		
 		if not VRReady then
 			HandPosition = VirtualRig.LeftUpperArm.CFrame:Lerp(VirtualRig.LeftLowerArm.CFrame, 0.5) * AccessorySettings.LimbOffset
+			--warn("Setting HandPosition to hands")
 			if Point1 then
 				VirtualRig.LeftUpperArm.Aim.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
 				VirtualRig.LeftUpperArm.Aim.CFrame = Camera.CFrame * AccessorySettings.LimbOffset
@@ -514,11 +508,13 @@ local function OnUserCFrameChanged(UserCFrame, Positioning, IgnoreTorso)
 				VirtualRig.LeftUpperArm.Aim.MaxTorque = Vector3.new(0, 0, 0)
 			end
 		end
+		
 		limbCFs.LeftArm = HandPosition
 	end
 	
 	if UserCFrame == Enum.UserCFrame.Head then
 		VirtualRig.Head.CFrame = Positioning
+		
 	elseif UserCFrame == Enum.UserCFrame.RightHand and VRReady then
 		VirtualRig.RightHand.CFrame = Positioning
 		if holdingright then
@@ -562,20 +558,25 @@ end)
 
 local OnRenderStepped = RunService.Stepped:Connect(function()
 	Camera.CameraSubject = VirtualBody.Humanoid
+
 	if not VRReady then
 		OnUserCFrameChanged(Enum.UserCFrame.Head, CFrame.new(0, 0, 0))
+		
 		OnUserCFrameChanged(Enum.UserCFrame.RightHand, CFrame.new(0, 0, 0), true)
 		OnUserCFrameChanged(Enum.UserCFrame.LeftHand, CFrame.new(0, 0, 0), true)
 	end
 end)
-
-spawn(function()
+spawn(function( )
 	while true do
 		task.wait()
 		FootYield()
 		UpdateFooting()
 	end
 end)
+
+--[[
+	Non-VR Support + VR Mechanics
+--]]
 
 local OnInput = UserInputService.InputBegan:Connect(function(Input, Processed)
 	if not Processed then
@@ -584,17 +585,21 @@ local OnInput = UserInputService.InputBegan:Connect(function(Input, Processed)
 				CameraOffset = Vector3.new(0, StudsOffset - 1.5, 0)
 			})
 		end
+		
 		if Input.KeyCode == Enum.KeyCode.C then
 			VirtualBody:MoveTo(Mouse.Hit.p)
 			VirtualRig:MoveTo(Mouse.Hit.p)
 		end
 	end
+		
 	if Input.KeyCode == Enum.KeyCode.LeftShift or Input.KeyCode == Enum.KeyCode.ButtonR2 then
 		dowalk=true
 	end
+	
 	if not VRReady and Input.UserInputType == Enum.UserInputType.MouseButton1 then
 		Point1 = true
 	end
+	
 	if not VRReady and Input.UserInputType == Enum.UserInputType.MouseButton2 then
 		Point2 = true
 	end
@@ -608,16 +613,23 @@ local OnInputEnded = UserInputService.InputEnded:Connect(function(Input, Process
 			})
 		end
 	end
+		
 	if Input.KeyCode == Enum.KeyCode.LeftShift or Input.KeyCode == Enum.KeyCode.ButtonR2 then
-		dowalk=false
+dowalk=false
 	end
+	
 	if not VRReady and Input.UserInputType == Enum.UserInputType.MouseButton1 then
 		Point1 = false
 	end
+	
 	if not VRReady and Input.UserInputType == Enum.UserInputType.MouseButton2 then
 		Point2 = false
 	end
 end)
+
+--[[
+	Proper Cleanup
+--]]
 
 if ChatEnabled then
 	spawn(ChatHUDFunc)
@@ -626,6 +638,7 @@ end
 if ViewportEnabled then
 	spawn(ViewHUDFunc)
 end
+
 
 end
 
@@ -636,93 +649,143 @@ Respawn = function()
 end;
 
 ChatHUDFunc = function()
+	--[[
+		Variables
+	--]]
+	
 	local UserInputService = game:GetService("UserInputService")
 	local RunService = game:GetService("RunService")
+	
 	local VRService = game:GetService("VRService")
-	local VRReady = VRService.VREnabled
+	 local VRReady = VRService.VREnabled
+	
 	local Players = game:GetService("Players")
-	local Client = Players.LocalPlayer
+	 local Client = Players.LocalPlayer
+	
 	local ChatHUD = game:GetObjects("rbxassetid://4649972829")[1]
 	ChatHUD.ResetOnSpawn = false
-	local GlobalFrame = ChatHUD.GlobalFrame
-	local Template = GlobalFrame.Template
-	local LocalFrame = ChatHUD.LocalFrame
-	local Global = ChatHUD.Global
-	local Local = ChatHUD.Local
+	 local GlobalFrame = ChatHUD.GlobalFrame
+	  local Template = GlobalFrame.Template
+	 local LocalFrame = ChatHUD.LocalFrame
+	 local Global = ChatHUD.Global
+	 local Local = ChatHUD.Local
+	
 	local Camera = workspace.CurrentCamera
+	
 	Template.Parent = nil
 	ChatHUD.Parent = game:GetService("CoreGui")
+	
+	--[[
+		Code
+	--]]
+	
 	local Highlight = Global.Frame.BackgroundColor3
 	local Deselected = Local.Frame.BackgroundColor3
+	
 	local OpenGlobalTab = function()
 		Global.Frame.BackgroundColor3 = Highlight
 		Local.Frame.BackgroundColor3 = Deselected
+		
 		Global.Font = Enum.Font.SourceSansBold
 		Local.Font = Enum.Font.SourceSans
+		
 		GlobalFrame.Visible = true
 		LocalFrame.Visible = false
 	end
+	
 	local OpenLocalTab = function()
 		Global.Frame.BackgroundColor3 = Deselected
 		Local.Frame.BackgroundColor3 = Highlight
+		
 		Global.Font = Enum.Font.SourceSans
 		Local.Font = Enum.Font.SourceSansBold
+		
 		GlobalFrame.Visible = false
 		LocalFrame.Visible = true
 	end
+	
 	Global.MouseButton1Down:Connect(OpenGlobalTab)
 	Local.MouseButton1Down:Connect(OpenLocalTab)
 	Global.MouseButton1Click:Connect(OpenGlobalTab)
 	Local.MouseButton1Click:Connect(OpenLocalTab)
+	
 	OpenLocalTab()
+	
+	--
+	
 	local function GetPlayerDistance(Sender)
 		if Sender.Character and Sender.Character:FindFirstChild("Head") then
 			return math.floor((Sender.Character.Head.Position - Camera:GetRenderCFrame().p).Magnitude + 0.5)
 		end
 	end
+	
 	local function NewGlobal(Message, Sender, Color)
 		local Frame = Template:Clone()
+		
 		Frame.Text = ("[%s]: %s"):format(Sender.Name, Message)
 		Frame.User.Text = ("[%s]:"):format(Sender.Name)
 		Frame.User.TextColor3 = Color
 		Frame.BackgroundColor3 = Color
 		Frame.Parent = GlobalFrame
-		delay(60, function() Frame:Destroy() end)
+		
+		delay(60, function()
+			Frame:Destroy()
+		end)
 	end
+	
 	local function NewLocal(Message, Sender, Color, Dist)
 		local Frame = Template:Clone()
+		
 		Frame.Text = ("(%s) [%s]: %s"):format(tostring(Dist), Sender.Name, Message)
 		Frame.User.Text = ("(%s) [%s]:"):format(tostring(Dist), Sender.Name)
 		Frame.User.TextColor3 = Color
 		Frame.BackgroundColor3 = Color
 		Frame.Parent = LocalFrame
-		delay(60, function() Frame:Destroy() end)
+		
+		delay(60, function()
+			Frame:Destroy()
+		end)
 	end
+	
 	local function OnNewChat(Message, Sender, Color)
 		if not ChatHUD or not ChatHUD.Parent then return end
+		
 		NewGlobal(Message, Sender, Color)
+		
 		local Distance = GetPlayerDistance(Sender)
+		
 		if Distance and Distance <= ChatLocalRange then
 			NewLocal(Message, Sender, Color, Distance)
 		end
 	end
+	
 	local function OnPlayerAdded(Player)
 		if not ChatHUD or not ChatHUD.Parent then return end
+		
 		local Color = BrickColor.Random().Color
+		
 		Player.Chatted:Connect(function(Message)
 			OnNewChat(Message, Player, Color)
 		end)
 	end
+	
 	Players.PlayerAdded:Connect(OnPlayerAdded)
+	
 	for _, Player in pairs(Players:GetPlayers()) do
 		OnPlayerAdded(Player)
 	end
+	
+	--
+	
 	local ChatPart = ChatHUD.Part
+	
 	ChatHUD.Adornee = ChatPart
+	
 	if VRReady then
 		ChatHUD.Parent = game:GetService("CoreGui")
 		ChatHUD.Enabled = true
 		ChatHUD.AlwaysOnTop = true
+		
 		local OnInput = UserInputService.InputBegan:Connect(function(Input, Processed)
 			if not Processed then
 				if Input.KeyCode == Enum.KeyCode.ButtonX then
@@ -730,85 +793,123 @@ ChatHUDFunc = function()
 				end
 			end
 		end)
+		
 		local RenderStepped = RunService.RenderStepped:Connect(function()
 			local LeftHand = VRService:GetUserCFrame(Enum.UserCFrame.LeftHand)
+			
 			ChatPart.CFrame = Camera.CFrame * LeftHand
 		end)
 	end
+	
 	wait(9e9)
 end;
 
 ViewHUDFunc = function()
+	--[[
+		Variables
+	--]]
+	
 	local ViewportRange = ViewportRange or 32
+	
 	local UserInputService = game:GetService("UserInputService")
 	local RunService = game:GetService("RunService")
+	
 	local VRService = game:GetService("VRService")
-	local VRReady = VRService.VREnabled
+	 local VRReady = VRService.VREnabled
+	
 	local Players = game:GetService("Players")
-	local Client = Players.LocalPlayer
-	local Mouse = Client:GetMouse()
+	 local Client = Players.LocalPlayer
+	  local Mouse = Client:GetMouse()
+	
 	local Camera = workspace.CurrentCamera
-	local CameraPort = Camera.CFrame
+	 local CameraPort = Camera.CFrame
+	
 	local ViewHUD = game:GetObjects("rbxassetid://4649974000")[1]
-	local Viewport = ViewHUD.Viewport
-	local Viewcam = Instance.new("Camera")
-	local ViewPart = ViewHUD.Part
+	ViewHUD.ResetOnSpawn = false
+	 local Viewport = ViewHUD.Viewport
+	  local Viewcam = Instance.new("Camera")
+	 local ViewPart = ViewHUD.Part
+	
 	ViewHUD.Parent = game:GetService("CoreGui")
+	
 	Viewcam.Parent = Viewport
 	Viewcam.CameraType = Enum.CameraType.Scriptable
 	Viewport.CurrentCamera = Viewcam
 	Viewport.BackgroundTransparency = 1
+	
+	--[[
+		Code
+	--]]
+	
 	local function Clone(Character)
 		local Arc = Character.Archivable
 		local Clone;
+		
 		Character.Archivable = true
 		Clone = Character:Clone()
 		Character.Archivable = Arc
+		
 		return Clone
 	end
+	
 	local function GetPart(Name, Parent, Descendants)
 		for i = 1, #Descendants do
 			local Part = Descendants[i]
+			
 			if Part.Name == Name and Part.Parent.Name == Parent then
 				return Part
 			end
 		end
 	end
+	
 	local function OnPlayerAdded(Player)
 		if not ViewHUD or not ViewHUD.Parent then return end
+		
 		local function CharacterAdded(Character)
 			if not ViewHUD or not ViewHUD.Parent then return end
+			
 			Character:WaitForChild("Head")
 			Character:WaitForChild("Humanoid")
 			task.wait(0.9)
+			
 			local FakeChar = Clone(Character)
 			local Root = FakeChar:FindFirstChild("HumanoidRootPart") or FakeChar:FindFirstChild("Head")
 			local RenderConnection;
+			
 			local Descendants = FakeChar:GetDescendants()
 			local RealDescendants = Character:GetDescendants()
 			local Correspondents = {};
+			
 			FakeChar.Humanoid.DisplayDistanceType = "None"
+			
 			for i = 1, #Descendants do
 				local Part = Descendants[i]
 				local Real = Part:IsA("BasePart") and GetPart(Part.Name, Part.Parent.Name, RealDescendants)
+				
 				if Part:IsA("BasePart") and Real then
 					Part.Anchored = true
 					Part:BreakJoints()
+					
 					if Part.Parent:IsA("Accessory") then
 						Part.Transparency = 0
 					end
+					
 					table.insert(Correspondents, {Part, Real})
 				end
 			end
+			
 			RenderConnection = RunService.RenderStepped:Connect(function()
 				if not Character or not Character.Parent then
 					RenderConnection:Disconnect()
 					FakeChar:Destroy()
+					
 					return
 				end
+				
 				if (Root and (Root.Position - Camera.CFrame.p).Magnitude <= ViewportRange) or Player == Client or not Root then
 					for i = 1, #Correspondents do
 						local Part, Real = unpack(Correspondents[i])
+						
 						if Part and Real and Part.Parent and Real.Parent then
 							Part.CFrame = Real.CFrame
 						elseif Part.Parent and not Real.Parent then
@@ -817,20 +918,27 @@ ViewHUDFunc = function()
 					end
 				end
 			end)
+			
 			FakeChar.Parent = Viewcam
 		end
+		
 		Player.CharacterAdded:Connect(CharacterAdded)
+		
 		if Player.Character then
 			spawn(function()
 				CharacterAdded(Player.Character)
 			end)
 		end
 	end
+	
 	local PlayerAdded = Players.PlayerAdded:Connect(OnPlayerAdded)
+	
 	for _, Player in pairs(Players:GetPlayers()) do
 		OnPlayerAdded(Player)
 	end
+	
 	ViewPart.Size = Vector3.new()
+	
 	if VRReady then
 		Viewport.Position = UDim2.new(.62, 0, .89, 0)
 		Viewport.Size = UDim2.new(.3, 0, .3, 0)
@@ -838,17 +946,24 @@ ViewHUDFunc = function()
 	else
 		Viewport.Size = UDim2.new(0.3, 0, 0.3, 0)
 	end
+	
 	local RenderStepped = RunService.RenderStepped:Connect(function()
 		local Render = Camera.CFrame
 		local Scale = Camera.ViewportSize
+		
 		if VRReady then
 			Render = Render * VRService:GetUserCFrame(Enum.UserCFrame.Head)
 		end
+		
 		CameraPort = CFrame.new(Render.p + Vector3.new(5, 2, 0), Render.p)
+		
 		Viewport.Camera.CFrame = CameraPort
+		
 		ViewPart.CFrame = Render * CFrame.new(0, 0, -16)
+		
 		ViewHUD.Size = UDim2.new(0, Scale.X - 6, 0, Scale.Y - 6)
 	end)
+	
 	wait(9e9)
 end;
 
@@ -871,7 +986,7 @@ function Align(Part1,name,cf,velocity)
 		Part1.CanTouch = false
 		Part1.CanCollide = false
 	end)
-	return {Set=function(self,a) doit=a end,Disconnect=con.Disconnect}
+	return {Set=function(self,a) doit=a end,Disconnect=con.Disconnect,SetVelocity=function(self,a) velocity=a end}
 end
 
 function findMeshID(id,hatname,alreadyfound)
@@ -908,114 +1023,66 @@ local ExtraParts = {
 	["Neck"] = "Torso",
 }
 
-Script()
-
-for i,v in next, plr.Character.HumanoidRootPart:GetChildren() do if v:IsA("Sound") then v.Volume = 0 end end
-local toolcons = {}
-for i,v in plr.Backpack:GetChildren() do 
-	local w = Instance.new("Weld") 	
-	w.Name = "RightGrip" 	
-	w.Parent = plr.Character["Right Arm"] 	
-	w.Part0 = w.Parent 	
-	w.Part1 = v.Handle 	
-	v.Parent = plr.Character 	
-	task.wait(0.03) 	
-	w:Destroy() 
-	v.Handle.CanQuery=false;v.Handle.CanCollide=false;v.Handle.CanTouch=false 
-	toolcons[v.Name] = Align(v.Handle,"RightArm",CFrame.Angles(math.pi/2,0,0)*CFrame.new(-1.5,1,0)*CFrame.Angles(0,-math.pi/2,-math.pi/2))
-	v.Parent=plr.Backpack
-end
-plr.Character.ChildAdded:Connect(function(tool: Tool)
-	if tool:IsA("Tool") then
-		if toolcons[tool.Name] then toolcons[tool.Name]:Set(true) return end
-	end
-end)
-plr.Character.ChildRemoved:Connect(function(tool: Tool)
-	if tool:IsA("Tool") then
-		toolcons[tool.Name]:Set(false)
-	end
-end)
-plr.Character.Humanoid.Health = 0
-local alreadyfound = {}
-for i,v in next, plr.Character.Humanoid:GetAccessories() do
-	local handle = v:FindFirstChild("Handle") if not handle then continue end
-	local id = filterMeshID((handle:IsA("MeshPart") and handle.MeshId) or handle:FindFirstChildOfClass("SpecialMesh").MeshId)
-	local limbName, foundthroughmeshid, index = findMeshID(id,v.Name,alreadyfound)
-	alreadyfound[limbName]=true
-	if ("meshid:"..id)==getgenv().options.rightToy then
-		Align(handle,(righttoypart),CFrame.new())
-		continue
-	end
-	handle.Transparency=getgenv().options.limbTransparency
-	if limbName=="Head" then handle.Transparency=1 end
-	if limbName=="Torso" then handle.Transparency=1 end
-	handle.CanQuery = false
-	handle.CanTouch = false
-	local hatattcf = handle:FindFirstChildOfClass("Attachment")
-	local headcf = VirtualRig:FindFirstChild(hatattcf.Name, true)
-	local washead=false
-	if limbName == "Head" then
-		for i,v in pairs(ExtraParts) do
-			if hatattcf.Name:find(i) then if limbName~=v then limbName = v washead=true break end end
-		end
-	end
-	Align(handle, limbName, (((limbName == "Head") or washead) and (washead and CFrame.Angles(-math.pi/2,0,0)*headcf.CFrame*hatattcf.CFrame:Inverse() or headcf.CFrame*hatattcf.CFrame:Inverse())) or getgenv().accoffsets[limbName][index])
-end
-plr.CharacterAdded:Connect(function(char)
-	local hrp = char:WaitForChild("HumanoidRootPart")
-	local hum = char:WaitForChild("Humanoid")
-	task.wait(0.25)
-	hrp.CFrame=VirtualBody.HumanoidRootPart.CFrame*CFrame.new(15,-15,15)
-	task.wait(0.15)
-	for i,v in next, hrp:GetChildren() do if v:IsA("Sound") then v.Volume = 0 end end
-	local toolcons = {}
-	for i,v in plr.Backpack:GetChildren() do 
-		local w = Instance.new("Weld") 	
-		w.Name = "RightGrip" 	
-		w.Parent = char["Right Arm"] 	
-		w.Part0 = w.Parent 	
-		w.Part1 = v.Handle 	
-		v.Parent = char 	
-		task.wait(0.03) 	
-		w:Destroy() 
-		v.Handle.CanQuery=false;v.Handle.CanCollide=false;v.Handle.CanTouch=false 
-		toolcons[v.Name] = Align(v.Handle,"RightArm",CFrame.Angles(math.pi/2,0,0)*CFrame.new(-1.5,1,0)*CFrame.Angles(0,-math.pi/2,-math.pi/2))
-		v.Parent=plr.Backpack
-	end
-	char.ChildAdded:Connect(function(tool: Tool)
-		if tool:IsA("Tool") then
-			if toolcons[tool.Name] then toolcons[tool.Name]:Set(true) return end
-		end
-	end)
-	char.ChildRemoved:Connect(function(tool: Tool)
-		if tool:IsA("Tool") then
-			toolcons[tool.Name]:Set(false)
-		end
-	end)
-	hum.Health = 0
-	local alreadyfound = {}
-	for i,v in next, hum:GetAccessories() do
-		local handle = v:FindFirstChild("Handle") if not handle then continue end
-		local id = filterMeshID((handle:IsA("MeshPart") and handle.MeshId) or handle:FindFirstChildOfClass("SpecialMesh").MeshId)
-		local limbName, foundthroughmeshid, index = findMeshID(id,v.Name,alreadyfound)
-		alreadyfound[limbName]=true
-		if ("meshid:"..id)==getgenv().options.rightToy then
-			Align(handle,(righttoypart),CFrame.new())
-			continue
-		end
-		handle.Transparency=getgenv().options.limbTransparency
-		if limbName=="Head" then handle.Transparency=1 end
-		if limbName=="Torso" then handle.Transparency=1 end
-		handle.CanQuery = false
-		handle.CanTouch = false
-		local hatattcf = handle:FindFirstChildOfClass("Attachment")
-		local headcf = VirtualRig:FindFirstChild(hatattcf.Name, true)
-		local washead=false
+function HatdropCallback(Character)
+	Character:WaitForChild("Humanoid")
+	task.wait(0.35)
+    local AnimationInstance = Instance.new("Animation");AnimationInstance.AnimationId = "rbxassetid://35154961"
+	workspace.FallenPartsDestroyHeight = 0/0
+    local hrp = Character.HumanoidRootPart
+    local startCF = (VirtualBody or Character).HumanoidRootPart.CFrame
+	local torso = Character:FindFirstChild("Torso") or Character:FindFirstChild("LowerTorso")
+    local Track = Character.Humanoid.Animator:LoadAnimation(AnimationInstance)
+    Track:Play()
+    Track.TimePosition = 3.24
+    Track:AdjustSpeed(0)
+    local locks = {}
+    for i,v in pairs(Character.Humanoid:GetAccessories()) do
+        table.insert(locks,v.Changed:Connect(function(th)
+            if th == "BackendAccoutrementState"then
+                sethiddenproperty(v,"BackendAccoutrementState",0);
+            end
+        end))
+        sethiddenproperty(v,"BackendAccoutrementState",0);
+    end;
+    local c;c=game:GetService("RunService").PostSimulation:Connect(function()
+        if(not Character:FindFirstChild("HumanoidRootPart"))then c:Disconnect()return;end
+        
+        hrp.Velocity = Vector3.new(0,0,25);
+        hrp.RotVelocity = Vector3.new(0,0,0);
+        hrp.CFrame = CFrame.new(startCF.X,fpdh+.25,startCF.Z) * (Character:FindFirstChild("Torso") and CFrame.Angles(math.rad(90),0,0) or CFrame.new());
+    end);
+    task.wait(.3);
+	local alreadyfound = {};
+	for i,v in pairs(Character.Humanoid:GetAccessories()) do
+		local handle = v:FindFirstChild("Handle") if not handle then continue end;
+		local id = filterMeshID((handle:IsA("MeshPart") and handle.MeshId) or handle:FindFirstChildOfClass("SpecialMesh").MeshId);
+		local limbName, foundthroughmeshid, index = findMeshID(id,v.Name,alreadyfound);
+		alreadyfound[limbName]=true;
+		handle.Transparency=getgenv().options.limbTransparency;
+		if limbName=="Head" then handle.Transparency=1 end;
+		if limbName=="Torso" then handle.Transparency=1 end;
+		handle.CanQuery = false;
+		handle.CanTouch = false;
+		local hatattcf = handle:FindFirstChildOfClass("Attachment");
+		local headcf = VirtualRig:FindFirstChild(hatattcf.Name, true);
+		local washead=false;
 		if limbName == "Head" then
 			for i,v in pairs(ExtraParts) do
-				if hatattcf.Name:find(i) then if limbName~=v then limbName = v washead=true break end end
+				if hatattcf.Name:find(i) then if limbName~=v then limbName = v washead=true break end end;
 			end
 		end
-		Align(handle, limbName, (((limbName == "Head") or washead) and (washead and CFrame.Angles(-math.pi/2,0,0)*headcf.CFrame*hatattcf.CFrame:Inverse() or headcf.CFrame*hatattcf.CFrame:Inverse())) or getgenv().accoffsets[limbName][index])
+		Align(handle, limbName, (((limbName == "Head") or washead) and (washead and CFrame.Angles(-math.pi/2,0,0)*headcf.CFrame*hatattcf.CFrame:Inverse() or headcf.CFrame*hatattcf.CFrame:Inverse())) or getgenv().accoffsets[limbName][index]);
 	end
-end)
+    Character.Humanoid.Health = 0;
+	torso.AncestryChanged:Wait();
+    for i,v in pairs(locks) do
+        v:Disconnect();
+    end
+    for i,v in pairs(Character.Humanoid:GetAccessories()) do
+        sethiddenproperty(v,"BackendAccoutrementState",4);
+    end
+end
+
+Script();
+HatdropCallback(plr.Character);
+plr.CharacterAdded:Connect(HatdropCallback);
